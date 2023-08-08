@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Nodes Health Check</title>
+    <link rel="stylesheet" href="layui/css/layui.css">
+</head>
+<body style="margin:0 auto;width:1000px">
+    <blockquote class="layui-elem-quote" style="margin-top: 30px;">
+        <div class="layui-text">
+            <ul>
+                <li>当前注册的代理端口：</li>
+            </ul>
+            <form class="layui-form layui-row layui-col-space16">
+                <div class="layui-btn-container layui-col-xs12">
+                    <button class="layui-btn" lay-submit lay-filter="demo-table-search" style="margin-left: 10px">刷新</button>
+                </div>
+            </form>
+        </div>
+    </blockquote>
+    <table class="layui-hide" id="ID-table-demo-data"></table>
+    <script src="layui/layui.js"></script>
+    <script type="text/html" id="ord">
+        {{d.LAY_NUM}}
+    </script>
+    <script>
+        layui.use('table', function(){
+            var table = layui.table;
+            var form = layui.form;
+            var inst = table.render({
+                elem: '#ID-table-demo-data',
+                url: '/registry/all',
+                parseData:function (res) {
+                        console.log(res);
+                        return{
+                            'code':res.code,
+                            'msg':res.message,
+                            'count':res.data.length,
+                            'data':res.data
+                        }
+                },
+                cols: [[
+                    {field:'zizeng', width:80, title: '序号',fixed: 'left',templet:'#ord'},
+                    {field: 'network', title: 'Network', minWidth: 120},
+                    {field: 'serverPort', title: '占用端口', minWidth: 160},
+                    {field: 'remoteaddr', title: '代理ip', width: 160},
+                    {field: 'remotePort', title: '代理端口', width: 100}
+                ]]
+            });
+            form.on('submit(demo-table-search)', function(data){
+                var field = data.field; // 获得表单字段
+                // 执行搜索重载
+                table.reload('ID-table-demo-data', {
+                });
+                layer.msg('刷新成功');
+                return false; // 阻止默认 form 跳转
+            });
+        });
+    </script>
+    <blockquote class="layui-elem-quote" style="margin-top: 30px;">
+        <div class="layui-text">
+            <ul>
+                <li>配置列表：</li>
+            </ul>
+            <form class="layui-form layui-row layui-col-space16">
+                <div class="layui-btn-container layui-col-xs12">
+                    <button class="layui-btn" lay-submit lay-filter="health-refresh" style="margin-left: 10px">刷新健康状态</button>
+                </div>
+            </form>
+        </div>
+    </blockquote>
+    <table class="layui-hide" id="ID-table-health-data"></table>
+    <script>
+        layui.use('table', function(){
+            var table = layui.table;
+            var form = layui.form;
+            var inst = table.render({
+                elem: '#ID-table-health-data',
+                url: '/registry/nodeinfos',
+                parseData:function (res) {
+                    console.log(res);
+                    var dataList = []
+                    res.data.forEach((item)=>{
+                        var network = item.network;
+                        var networkType = item.networkType;
+                        item.remoteHosts.forEach((rh) => {
+                            param = {
+                                host: rh,
+                                type: networkType
+                            }
+                            function showHealthInfo(info) {
+                                setTimeout(()=>{
+                                    var data = table.cache['ID-table-health-data'];
+                                    console.log('cache',data);
+                                    console.log('info',info);
+                                    data.forEach(row=>{
+                                        if (row.remoteHost == JSON.parse(info).data.host){
+                                            row.currentHeight = JSON.parse(info).data.height;
+                                        }
+                                    })
+                                    table.renderData('ID-table-health-data');
+                                },1000)
+                            }
+                            currentHeight =  Ajax.get('/node/blocknumber/' + rh + '/' + networkType,showHealthInfo);
+                            dataList.push({
+                                network: network,
+                                networkType: networkType,
+                                remoteHost: rh,
+                                currentHeight: currentHeight
+                            })
+                        })
+                    })
+                    return{
+                        'code':res.code,
+                        'msg':res.message,
+                        'count':res.data.length,
+                        'data':dataList
+                    }
+                },
+                cols: [[
+                    {field: 'network', title: 'Network', minWidth: 120},
+                    {field: 'networkType', title: 'NetworkType(用于区分获取当前块高的rpc方法)', minWidth: 140},
+                    {field: 'remoteHost', title: '节点ip:port', width: 160},
+                    {field: 'currentHeight',title: '当前块高',width: 160},
+                    {field: 'health',title: '健康状态',Width: 100 ,templet: function(d){
+                        if(d.currentHeight === 0){
+                            return '<i class="layui-icon layui-icon-face-surprised" style="font-size: 30px; color: red;"></i> ';
+                        } else {
+                            return '<i class="layui-icon layui-icon-face-smile" style="font-size: 30px; color: darkseagreen;"></i> ';
+                        }
+                    }},
+                ]]
+            });
+            form.on('submit(health-refresh)', function(data){
+                var field = data.field; // 获得表单字段
+                // 执行搜索重载
+                table.reload('ID-table-health-data', {
+                });
+                return false; // 阻止默认 form 跳转
+            });
+        });
+    </script>
+</body>
+<script>
+    var Ajax = {
+        get: function (url, callback) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, false);
+            xhr.onreadystatechange = function () {
+                // readyState == 4说明请求已完成
+                if (xhr.readyState == 4) {
+                    if (xhr.status == 200 || xhr.status == 304) {
+                        callback(xhr.responseText);
+                    }
+                }
+            }
+            xhr.send();
+        },
+        post: function (url, data, callback) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', url, false);
+            // 添加http头，发送信息至服务器时内容编码类型
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4) {
+                    if (xhr.status == 200 || xhr.status == 304) {
+                        // console.log(xhr.responseText);
+                        callback(xhr.responseText);
+                    }
+                }
+            }
+            xhr.send(data);
+        }
+    }
+
+</script>
+
+</html>

@@ -1,0 +1,194 @@
+[
+  {
+    "network": "ETH",
+    "networkType": "ETH",
+    "serverPort": 6001,
+    "remoteHosts": [
+      "172.31.38.21:7545",
+      "172.31.38.112:7545",
+      "43.227.255.118:58545"
+    ]
+  },
+  {
+    "network": "BTC",
+    "networkType": "BTC",
+    "serverPort": 6002,
+    "remoteHosts": [
+      "172.31.38.21:8332"
+    ]
+  },
+  {
+    "network": "TRX",
+    "networkType": "TRX",
+    "serverPort": 6003,
+    "remoteHosts": [
+      "172.31.41.171:8090"
+    ]
+  },
+  {
+    "network": "METIS",
+    "networkType": "ETH",
+    "serverPort": 6004,
+    "remoteHosts": [
+      "172.31.37.174:8545"
+    ]
+  },
+  {
+    "network": "BSC",
+    "networkType": "ETH",
+    "serverPort": 6005,
+    "remoteHosts": [
+      "172.31.39.214:7646",
+      "172.31.37.52:7647"
+    ]
+  },
+  {
+    "network": "ETC",
+    "networkType": "ETH",
+    "serverPort": 6006,
+    "remoteHosts": [
+      "172.31.43.133:7645",
+      "172.31.45.182:8645"
+    ]
+  },
+  {
+    "network": "KCS",
+    "networkType": "ETH",
+    "serverPort": 6007,
+    "remoteHosts": [
+      "172.31.34.234:8545"
+    ]
+  },
+  {
+    "network": "RVN",
+    "networkType": "BTC",
+    "serverPort": 6008,
+    "remoteHosts": [
+      "172.31.34.234:8766"
+    ]
+  },
+  {
+    "network": "XDAI",
+    "networkType": "ETH",
+    "serverPort": 6009,
+    "remoteHosts": [
+      "172.31.38.21:8845"
+    ]
+  },
+  {
+    "network": "MATIC",
+    "networkType": "ETH",
+    "serverPort": 6010,
+    "remoteHosts": [
+      "172.31.39.214:7545",
+      "172.31.36.154:1317"
+    ]
+  },
+  {
+    "network": "USDT",
+    "networkType": "BTC",
+    "serverPort": 6011,
+    "remoteHosts": [
+      "172.18.244.98:8332",
+      "172.31.45.182:28332"
+    ]
+  },
+  {
+    "network": "LTC",
+    "networkType": "BTC",
+    "serverPort": 6012,
+    "remoteHosts": [
+      "172.31.32.74:9332"
+    ]
+  },
+  {
+    "network": "DOGE",
+    "networkType": "BTC",
+    "serverPort": 6013,
+    "remoteHosts": [
+      "172.31.32.74:22555"
+    ]
+  },
+  {
+    "network": "DASH",
+    "networkType": "BTC",
+    "serverPort": 6014,
+    "remoteHosts": [
+      "172.31.32.74:9998"
+    ]
+  },
+  {
+    "network": "BCH",
+    "networkType": "BTC",
+    "serverPort": 6015,
+    "remoteHosts": [
+      "172.31.32.74:8332"
+    ]
+  },
+  {
+    "network": "BTG",
+    "networkType": "BTC",
+    "serverPort": 6016,
+    "remoteHosts": [
+      "172.31.32.74:8432"
+    ]
+  },
+  {
+    "network": "BCD",
+    "networkType": "BTC",
+    "serverPort": 6017,
+    "remoteHosts": [
+      "172.31.32.74:7116"
+    ]
+  },
+  {
+    "network": "MOVR",
+    "networkType": "ETH",
+    "serverPort": 6018,
+    "remoteHosts": [
+      "172.18.19.128:9933"
+    ]
+  },
+  {
+    "network": "DGB",
+    "networkType": "BTC",
+    "serverPort": 6019,
+    "remoteHosts": [
+      "172.31.41.181:14022"
+    ]
+  },
+  {
+    "network": "OP",
+    "networkType": "ETH",
+    "serverPort": 6020,
+    "remoteHosts": [
+      "172.31.34.183:9991",
+      "172.31.0.241:9991"
+    ]
+  },
+  {
+    "network": "BEACON",
+    "networkType": "BEACON",
+    "serverPort": 6021,
+    "remoteHosts": [
+      "172.31.37.52:3500",
+      "172.31.45.105:3500"
+    ]
+  },
+  {
+    "network": "XVG",
+    "networkType": "BTC",
+    "serverPort": 6022,
+    "remoteHosts": [
+      "172.18.171.173:20102"
+    ]
+  },
+  {
+    "network": "MATIC",
+    "networkType": "ETH",
+    "serverPort": 6023,
+    "remoteHosts": [
+      "172.31.36.154:1317"
+    ]
+  }
+]

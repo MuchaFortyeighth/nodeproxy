@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: node_proxy
+  profiles:
+    active: prod
+server:
+  port: 9527
+
+proxy:
+  config:
+    path: ${CONFIG_PATH:./nodeproxy.json}
