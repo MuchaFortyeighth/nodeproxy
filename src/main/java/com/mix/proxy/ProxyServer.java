@@ -38,8 +38,8 @@ public class ProxyServer implements Comparable<ProxyServer>{
     public ChannelFuture init() {
         serverBootstrap = new ServerBootstrap();
         bootstrap = new Bootstrap();
-        bossgroup = new NioEventLoopGroup();
-        workgroup = new NioEventLoopGroup();
+        if (bossgroup == null){bossgroup = new NioEventLoopGroup();}
+        if (workgroup == null){workgroup = new NioEventLoopGroup();}
         serverBootstrap.group(bossgroup, workgroup);
         serverBootstrap.channel(NioServerSocketChannel.class);
         bootstrap.channel(NioSocketChannel.class);
@@ -66,8 +66,8 @@ public class ProxyServer implements Comparable<ProxyServer>{
         ChannelFuture future = serverBootstrap.bind(serverPort);
         future.channel().closeFuture().addListener((ChannelFutureListener) channelFuture -> {
             log.info("channel close:" + channelFuture.channel());
-            bossgroup.shutdownGracefully();
-            workgroup.shutdownGracefully();
+//            bossgroup.shutdownGracefully();
+//            workgroup.shutdownGracefully();
         });
         log.info("init proxy channel ->>" + future.channel().id() + "|" + serverPort+ "|" +remoteaddr+ "|" +remotePort);
         this.currentChannel = future;
