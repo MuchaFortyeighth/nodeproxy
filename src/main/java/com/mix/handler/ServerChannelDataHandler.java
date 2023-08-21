@@ -13,10 +13,10 @@ import java.net.InetSocketAddress;
  */
 @Slf4j
 //@ChannelHandler.Sharable
-public class ChannelDataHandler extends ChannelInboundHandlerAdapter  {
+public class ServerChannelDataHandler extends ChannelInboundHandlerAdapter  {
     Channel channel;
 
-    public ChannelDataHandler(Channel channel) {
+    public ServerChannelDataHandler(Channel channel) {
         this.channel = channel;
     }
 
@@ -34,7 +34,6 @@ public class ChannelDataHandler extends ChannelInboundHandlerAdapter  {
         //缓冲区复位
         readBuffer.retain();
         channel.writeAndFlush(readBuffer);
-
     }
 
     @Override
@@ -42,8 +41,18 @@ public class ChannelDataHandler extends ChannelInboundHandlerAdapter  {
         InetSocketAddress insocket = (InetSocketAddress) ctx.channel().remoteAddress();
         String clientIP = insocket.getAddress().getHostAddress();
         String clientPort = String.valueOf(insocket.getPort());
-        log.info("收到来自{}：{}的请求，成功创建Channel[{}],->>[{}]", clientIP, clientPort, ctx.channel().id(),channel.id());
+        log.debug("收到来自{}：{}的请求，成功创建Channel[{}],->>[{}]", clientIP, clientPort, ctx.channel().id(),channel.id());
         super.channelActive(ctx);
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        InetSocketAddress insocket = (InetSocketAddress) ctx.channel().remoteAddress();
+        String clientIP = insocket.getAddress().getHostAddress();
+        String clientPort = String.valueOf(insocket.getPort());
+        log.debug("关闭来自{}：{}的请求，成功回收Channel[{}]",clientIP, clientPort, ctx.channel().id());
+        channel.close();
+        super.channelInactive(ctx);
     }
 
     /**

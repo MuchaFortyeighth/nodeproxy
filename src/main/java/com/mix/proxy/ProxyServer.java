@@ -1,5 +1,7 @@
 package com.mix.proxy;
 
+import com.mix.handler.ClinetChannelDataHandler;
+import com.mix.handler.IdleEventHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -8,11 +10,11 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
-import com.mix.handler.ChannelDataHandler;
-import io.netty.util.concurrent.DefaultEventExecutor;
-import io.netty.util.concurrent.DefaultEventExecutorGroup;
-import io.netty.util.concurrent.EventExecutorGroup;
+import com.mix.handler.ServerChannelDataHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -21,6 +23,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProxyServer implements Comparable<ProxyServer>{
 
+    /**
+     * 通道读写超时配置项
+     */
+    protected final int READ_IDLE = 0;
+    protected final int WRITE_IDLE = 0;
+    protected final int ALL_IDLE = 10;
 
     private ServerBootstrap serverBootstrap;
     private Bootstrap bootstrap;
@@ -60,16 +68,18 @@ public class ProxyServer implements Comparable<ProxyServer>{
 //                bootstrap.handler(new ChannelInitializer<SocketChannel>() {
 //                    @Override
 //                    protected void initChannel(SocketChannel cliCh) throws Exception {
-//                        cliCh.pipeline().addLast(new ChannelDataHandler(ch));
+//                        cliCh.pipeline().addLast(new ServerChannelDataHandler(ch));
 //                    }
 //                });
 //                ChannelFuture sync = bootstrap.connect(remoteaddr, remotePort).sync();
-//                ch.pipeline().addLast(executor,new ChannelDataHandler(sync.channel()));
+//                ch.pipeline().addLast(executor,new ServerChannelDataHandler(sync.channel()));
 //            }
             @Override
             protected void initChannel(SocketChannel ch) throws Exception {
                 //服务端channel，将服务端的数据发送给客户端，所以构造函数参数要传入客户端的channel
-                ch.pipeline().addLast("serverHandler", new ChannelDataHandler(getClientChannel(ch,remoteaddr,remotePort)));
+                ch.pipeline().addLast(new IdleStateHandler(READ_IDLE, WRITE_IDLE, ALL_IDLE, TimeUnit.MINUTES))
+                        .addLast("idledeal", new IdleEventHandler())
+                        .addLast("serverHandler", new ServerChannelDataHandler(getClientChannel(ch,remoteaddr,remotePort)));
             }
         });
 
@@ -88,7 +98,9 @@ public class ProxyServer implements Comparable<ProxyServer>{
                     @Override
                     protected void initChannel(SocketChannel socketChannel) {
                         //客户端端channel，客户端返回的数据给服务端，所以构造函数参数要传入服务端的channel
-                        socketChannel.pipeline().addLast("clientHandler", new ChannelDataHandler(ch));
+                        socketChannel.pipeline().addLast(new IdleStateHandler(READ_IDLE, WRITE_IDLE, ALL_IDLE, TimeUnit.MINUTES))
+                                .addLast("idledeal", new IdleEventHandler())
+                                .addLast("clientHandler", new ClinetChannelDataHandler(ch));
                     }
                 });
         ChannelFuture sync = bootstrap.connect(remoteaddr, remotePort).sync();
