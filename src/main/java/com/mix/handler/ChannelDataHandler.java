@@ -26,13 +26,22 @@ public class ChannelDataHandler extends ChannelInboundHandlerAdapter  {
      */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        long begin = System.currentTimeMillis();
         // 获取读取的数据， 是一个缓冲。
         ByteBuf readBuffer = (ByteBuf) msg;
-        log.info("get data: " + readBuffer.toString(CharsetUtil.UTF_8));
+//        log.info("get data: " + readBuffer.toString(CharsetUtil.UTF_8));
         //缓冲区复位
         readBuffer.retain();
-        channel.writeAndFlush(readBuffer);
+        channel.writeAndFlush(readBuffer).addListener(future -> {
+            if (future.isDone()) {
+                // 4. balabala 其他的逻辑
+                long time =  System.currentTimeMillis() - begin;
+            }
+        });
+
     }
+
+
 
     /**
      * 异常处理逻辑， 当客户端异常退出的时候，也会运行。
