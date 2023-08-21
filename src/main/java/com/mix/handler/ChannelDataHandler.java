@@ -31,7 +31,7 @@ public class ChannelDataHandler extends ChannelInboundHandlerAdapter  {
         log.info("get data: " + readBuffer.toString(CharsetUtil.UTF_8));
         //缓冲区复位
         readBuffer.retain();
-        ctx.writeAndFlush(readBuffer);
+        channel.writeAndFlush(readBuffer);
     }
 
     /**
