@@ -34,8 +34,8 @@ public class ChannelDataHandler extends ChannelInboundHandlerAdapter  {
         readBuffer.retain();
         channel.writeAndFlush(readBuffer).addListener(future -> {
             if (future.isDone()) {
-                // 4. balabala 其他的逻辑
                 long time =  System.currentTimeMillis() - begin;
+                log.info("writeAndFlush cost time " + time);
             }
         });
 

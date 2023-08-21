@@ -9,6 +9,9 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
 import com.mix.handler.ChannelDataHandler;
+import io.netty.util.concurrent.DefaultEventExecutor;
+import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import io.netty.util.concurrent.EventExecutorGroup;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -17,6 +20,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class ProxyServer implements Comparable<ProxyServer>{
+
+    static final EventExecutorGroup executor = new DefaultEventExecutorGroup(100);
 
     private ServerBootstrap serverBootstrap;
     private Bootstrap bootstrap;
@@ -56,11 +61,11 @@ public class ProxyServer implements Comparable<ProxyServer>{
                 bootstrap.handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel cliCh) throws Exception {
-                        cliCh.pipeline().addLast(new ChannelDataHandler(ch));
+                        cliCh.pipeline().addLast(executor,new ChannelDataHandler(ch));
                     }
                 });
                 ChannelFuture sync = bootstrap.connect(remoteaddr, remotePort).sync();
-                ch.pipeline().addLast(new ChannelDataHandler(sync.channel()));
+                ch.pipeline().addLast(executor,new ChannelDataHandler(sync.channel()));
             }
         });
         ChannelFuture future = serverBootstrap.bind(serverPort);
