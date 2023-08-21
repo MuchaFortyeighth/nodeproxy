@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProxyServer implements Comparable<ProxyServer>{
 
-    static final EventExecutorGroup executor = new DefaultEventExecutorGroup(100);
+    static final EventExecutorGroup executor = new DefaultEventExecutorGroup(64);
 
     private ServerBootstrap serverBootstrap;
     private Bootstrap bootstrap;
@@ -43,8 +43,8 @@ public class ProxyServer implements Comparable<ProxyServer>{
     public ChannelFuture init() {
         serverBootstrap = new ServerBootstrap();
         bootstrap = new Bootstrap();
-        if (bossgroup == null){bossgroup = new NioEventLoopGroup();}
-        if (workgroup == null){workgroup = new NioEventLoopGroup();}
+        if (bossgroup == null){bossgroup = new NioEventLoopGroup(32);}
+        if (workgroup == null){workgroup = new NioEventLoopGroup(32);}
         serverBootstrap.group(bossgroup, workgroup);
         serverBootstrap.channel(NioServerSocketChannel.class);
         bootstrap.channel(NioSocketChannel.class);
