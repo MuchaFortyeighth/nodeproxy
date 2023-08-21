@@ -28,10 +28,10 @@ public class ChannelDataHandler extends ChannelInboundHandlerAdapter  {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         // 获取读取的数据， 是一个缓冲。
         ByteBuf readBuffer = (ByteBuf) msg;
-        // log.info("get data: " + readBuffer.toString(CharsetUtil.UTF_8));
+        log.info("get data: " + readBuffer.toString(CharsetUtil.UTF_8));
         //缓冲区复位
         readBuffer.retain();
-        channel.writeAndFlush(readBuffer);
+        ctx.writeAndFlush(readBuffer);
     }
 
     /**
