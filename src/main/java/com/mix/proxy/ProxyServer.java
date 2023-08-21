@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProxyServer implements Comparable<ProxyServer>{
 
-    static final EventExecutorGroup executor = new DefaultEventExecutorGroup(64);
 
     private ServerBootstrap serverBootstrap;
     private Bootstrap bootstrap;
@@ -44,7 +43,7 @@ public class ProxyServer implements Comparable<ProxyServer>{
         serverBootstrap = new ServerBootstrap();
         bootstrap = new Bootstrap();
         if (bossgroup == null){bossgroup = new NioEventLoopGroup();}
-        if (workgroup == null){workgroup = new NioEventLoopGroup();}
+        if (workgroup == null){workgroup = new NioEventLoopGroup(64);}
         serverBootstrap.group(bossgroup, workgroup);
         serverBootstrap.channel(NioServerSocketChannel.class);
         bootstrap.channel(NioSocketChannel.class);
@@ -56,28 +55,46 @@ public class ProxyServer implements Comparable<ProxyServer>{
                 .option(ChannelOption.SO_RCVBUF, 16 * 1024)
                 .option(ChannelOption.SO_KEEPALIVE, true);
         serverBootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
+//            @Override
+//            protected void initChannel(final SocketChannel ch) throws Exception {
+//                bootstrap.handler(new ChannelInitializer<SocketChannel>() {
+//                    @Override
+//                    protected void initChannel(SocketChannel cliCh) throws Exception {
+//                        cliCh.pipeline().addLast(new ChannelDataHandler(ch));
+//                    }
+//                });
+//                ChannelFuture sync = bootstrap.connect(remoteaddr, remotePort).sync();
+//                ch.pipeline().addLast(executor,new ChannelDataHandler(sync.channel()));
+//            }
             @Override
-            protected void initChannel(final SocketChannel ch) throws Exception {
-                bootstrap.handler(new ChannelInitializer<SocketChannel>() {
-                    @Override
-                    protected void initChannel(SocketChannel cliCh) throws Exception {
-                        cliCh.pipeline().addLast(new ChannelDataHandler(ch));
-                    }
-                });
-                ChannelFuture sync = bootstrap.connect(remoteaddr, remotePort).sync();
-                ch.pipeline().addLast(executor,new ChannelDataHandler(sync.channel()));
+            protected void initChannel(SocketChannel ch) throws Exception {
+                //服务端channel，将服务端的数据发送给客户端，所以构造函数参数要传入客户端的channel
+                ch.pipeline().addLast("serverHandler", new ChannelDataHandler(getClientChannel(ch,remoteaddr,remotePort)));
             }
         });
+
         ChannelFuture future = serverBootstrap.bind(serverPort);
         future.channel().closeFuture().addListener((ChannelFutureListener) channelFuture -> {
             log.info("channel close:" + channelFuture.channel());
-//            bossgroup.shutdownGracefully();
-//            workgroup.shutdownGracefully();
         });
         log.info("init proxy channel ->>" + future.channel().id() + "|" + serverPort+ "|" +remoteaddr+ "|" +remotePort);
         this.currentChannel = future;
         return future;
     }
+
+    private Channel getClientChannel(SocketChannel ch,String remoteaddr,int remotePort) throws InterruptedException {
+        this.bootstrap
+                .handler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel socketChannel) {
+                        //客户端端channel，客户端返回的数据给服务端，所以构造函数参数要传入服务端的channel
+                        socketChannel.pipeline().addLast("clientHandler", new ChannelDataHandler(ch));
+                    }
+                });
+        ChannelFuture sync = bootstrap.connect(remoteaddr, remotePort).sync();
+        return sync.channel();
+    }
+
 
     public int getServerPort() {
         return serverPort;

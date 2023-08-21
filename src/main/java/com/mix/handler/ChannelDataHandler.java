@@ -28,7 +28,6 @@ public class ChannelDataHandler extends ChannelInboundHandlerAdapter  {
      */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        long begin = System.currentTimeMillis();
         // 获取读取的数据， 是一个缓冲。
         ByteBuf readBuffer = (ByteBuf) msg;
 //        log.info("get data: " + readBuffer.toString(CharsetUtil.UTF_8));
@@ -43,7 +42,7 @@ public class ChannelDataHandler extends ChannelInboundHandlerAdapter  {
         InetSocketAddress insocket = (InetSocketAddress) ctx.channel().remoteAddress();
         String clientIP = insocket.getAddress().getHostAddress();
         String clientPort = String.valueOf(insocket.getPort());
-        log.info("收到来自{}：{}的请求，成功创建Channel[{}]", clientIP, clientPort, ctx.channel().id());
+        log.info("收到来自{}：{}的请求，成功创建Channel[{}],->>[{}]", clientIP, clientPort, ctx.channel().id(),channel.id());
         super.channelActive(ctx);
     }
 
