@@ -6,11 +6,13 @@ import io.netty.channel.*;
 import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
 
+import java.net.InetSocketAddress;
+
 /**
  * Created by reeves on 2023/7/18.
  */
 @Slf4j
-@ChannelHandler.Sharable
+//@ChannelHandler.Sharable
 public class ChannelDataHandler extends ChannelInboundHandlerAdapter  {
     Channel channel;
 
@@ -32,16 +34,18 @@ public class ChannelDataHandler extends ChannelInboundHandlerAdapter  {
 //        log.info("get data: " + readBuffer.toString(CharsetUtil.UTF_8));
         //缓冲区复位
         readBuffer.retain();
-        channel.writeAndFlush(readBuffer).addListener(future -> {
-            if (future.isDone()) {
-                long time =  System.currentTimeMillis() - begin;
-                log.info("writeAndFlush cost time " + time);
-            }
-        });
+        channel.writeAndFlush(readBuffer);
 
     }
 
-
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        InetSocketAddress insocket = (InetSocketAddress) ctx.channel().remoteAddress();
+        String clientIP = insocket.getAddress().getHostAddress();
+        String clientPort = String.valueOf(insocket.getPort());
+        log.info("收到来自{}：{}的请求，成功创建Channel[{}]", clientIP, clientPort, ctx.channel().id());
+        super.channelActive(ctx);
+    }
 
     /**
      * 异常处理逻辑， 当客户端异常退出的时候，也会运行。
@@ -49,7 +53,7 @@ public class ChannelDataHandler extends ChannelInboundHandlerAdapter  {
      */
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        channel.closeFuture().sync();
+//        channel.closeFuture().sync();
         ctx.close();
         log.error("channel close",cause);
     }
