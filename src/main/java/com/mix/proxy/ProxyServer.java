@@ -1,6 +1,7 @@
 package com.mix.proxy;
 
 import com.mix.handler.HttpForwardHandler;
+import com.mix.handler.HttpProxyHandler;
 import com.mix.handler.IdleEventHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
@@ -13,6 +14,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
@@ -74,9 +76,9 @@ public class ProxyServer implements Comparable<ProxyServer>{
                 //服务端channel，将服务端的数据发送给客户端，所以构造函数参数要传入客户端的channel
                 ch.pipeline().addLast(new IdleStateHandler(READ_IDLE, WRITE_IDLE, ALL_IDLE, TimeUnit.MINUTES))
                         .addLast("idledeal", new IdleEventHandler())
-                        .addLast(new HttpServerCodec(4096, 8192, maxContentLength))
-                        .addLast(new HttpObjectAggregator(maxContentLength))
-                        .addLast(eventGroup,new HttpForwardHandler(remoteaddr, remotePort));
+                        .addLast("HTTP_CODEC",new HttpServerCodec())
+                        .addLast("HTTP_AGGREGATOR",new HttpObjectAggregator(maxContentLength))
+                        .addLast(eventGroup,new HttpProxyHandler(remoteaddr, remotePort));
 //                        .addLast("responseAggregator",new HttpObjectAggregator(maxContentLength));
 //                        .addLast("serverHandler", new ServerChannelDataHandler(getClientChannel(ch,remoteaddr,remotePort)));
             }
