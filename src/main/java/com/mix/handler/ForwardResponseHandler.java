@@ -26,7 +26,7 @@ public class ForwardResponseHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof FullHttpResponse) {
             FullHttpResponse response = (FullHttpResponse) msg;
             DefaultHttpHeaders headers = (DefaultHttpHeaders) response.headers();
-            headers.add("Transfer-Encoding","chunked");
+//            headers.add("Transfer-Encoding","chunked");
             // 将目标服务器的响应发送给原始客户端
             if (clientChannel.isActive() && clientChannel.isWritable()) {
                 ChannelFuture cf = clientChannel.writeAndFlush(response);
