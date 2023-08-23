@@ -36,6 +36,7 @@ public class HttpForwardHandler extends ChannelInboundHandlerAdapter {
                             pipeline.addLast(new HttpClientCodec(4096, 8192, maxContentLength));
                             pipeline.addLast(new HttpObjectAggregator(maxContentLength));
                             pipeline.addLast(new ForwardResponseHandler(ctx.channel()));
+                            pipeline.addLast("responseAggregator", new HttpObjectAggregator(maxContentLength));
                         }
                     });
 

@@ -76,7 +76,8 @@ public class ProxyServer implements Comparable<ProxyServer>{
                         .addLast("idledeal", new IdleEventHandler())
                         .addLast(new HttpServerCodec(4096, 8192, maxContentLength))
                         .addLast(new HttpObjectAggregator(maxContentLength))
-                        .addLast(eventGroup,new HttpForwardHandler(remoteaddr, remotePort));
+                        .addLast(eventGroup,new HttpForwardHandler(remoteaddr, remotePort))
+                        .addLast("responseAggregator",new HttpObjectAggregator(maxContentLength));
 //                        .addLast("serverHandler", new ServerChannelDataHandler(getClientChannel(ch,remoteaddr,remotePort)));
             }
         });
