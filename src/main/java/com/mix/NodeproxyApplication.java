@@ -1,5 +1,6 @@
 package com.mix;
 
+import io.netty.util.ResourceLeakDetector;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -12,6 +13,7 @@ import org.springframework.web.client.RestTemplate;
 public class NodeproxyApplication {
 
 	public static void main(String[] args) {
+		ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.ADVANCED);
 		SpringApplication.run(NodeproxyApplication.class, args);
 	}
 

@@ -1,6 +1,7 @@
 package com.mix.handler;
 
 
+import com.mix.service.ChannelCounter;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.util.CharsetUtil;
@@ -30,10 +31,39 @@ public class ServerChannelDataHandler extends ChannelInboundHandlerAdapter  {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         // 获取读取的数据， 是一个缓冲。
         ByteBuf readBuffer = (ByteBuf) msg;
-//        log.info("get data: " + readBuffer.toString(CharsetUtil.UTF_8));
+        String msgStr = readBuffer.toString(CharsetUtil.UTF_8);
+
+//        log.info("server read times :" + ChannelCounter.serverReadTimes.addAndGet(1));
         //缓冲区复位
         readBuffer.retain();
-        channel.writeAndFlush(readBuffer);
+        readBuffer.release();
+        if (channel.isActive() && channel.isWritable()) {
+            ChannelFuture cf = channel.writeAndFlush(readBuffer);
+            if (cf.isDone() && cf.cause() != null) {
+                log.error("channelWrite error!", cf.cause());
+                ctx.close();
+            }
+        }
+
+    }
+
+    @Override
+    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+        if (!ctx.channel().isWritable()) {
+            Channel channel = ctx.channel();
+            log.info("server channel is unwritable, turn off autoread, clientId:{}", channel.id().asShortText());
+            channel.config().setAutoRead(false);
+        }
+    }
+
+    @Override
+    public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception
+    {
+        Channel channel = ctx.channel();
+        if (channel.isWritable()) {
+            log.info("server channel is writable again, turn on autoread, clientId:{}", channel.id().asShortText());
+            channel.config().setAutoRead(true);
+        }
     }
 
     @Override
@@ -50,6 +80,7 @@ public class ServerChannelDataHandler extends ChannelInboundHandlerAdapter  {
         InetSocketAddress insocket = (InetSocketAddress) ctx.channel().remoteAddress();
         String clientIP = insocket.getAddress().getHostAddress();
         String clientPort = String.valueOf(insocket.getPort());
+        log.info("server inactive times :" + ChannelCounter.serverReadTimes.addAndGet(1));
         log.debug("关闭来自{}：{}的请求，成功回收Channel[{}]",clientIP, clientPort, ctx.channel().id());
         channel.close();
         super.channelInactive(ctx);

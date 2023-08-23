@@ -1,6 +1,6 @@
 package com.mix.proxy;
 
-import com.mix.handler.ClinetChannelDataHandler;
+import com.mix.handler.HttpForwardHandler;
 import com.mix.handler.IdleEventHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
@@ -10,8 +10,12 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
-import com.mix.handler.ServerChannelDataHandler;
+
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import io.netty.util.concurrent.EventExecutorGroup;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.TimeUnit;
@@ -29,6 +33,8 @@ public class ProxyServer implements Comparable<ProxyServer>{
     protected final int READ_IDLE = 0;
     protected final int WRITE_IDLE = 0;
     protected final int ALL_IDLE = 10;
+
+    static final EventExecutorGroup eventGroup = new DefaultEventExecutorGroup(16);
 
     private ServerBootstrap serverBootstrap;
     private Bootstrap bootstrap;
@@ -57,55 +63,37 @@ public class ProxyServer implements Comparable<ProxyServer>{
         bootstrap.channel(NioSocketChannel.class);
         bootstrap.group(bossgroup);
         //缓冲区设置
-        serverBootstrap.option(ChannelOption.SO_BACKLOG, 1024);
+        serverBootstrap.option(ChannelOption.SO_BACKLOG, 256);
         // SO_SNDBUF发送缓冲区，SO_RCVBUF接收缓冲区，SO_KEEPALIVE开启心跳监测（保证连接有效）
-        serverBootstrap.option(ChannelOption.SO_SNDBUF, 16 * 1024)
-                .option(ChannelOption.SO_RCVBUF, 16 * 1024)
-                .option(ChannelOption.SO_KEEPALIVE, true);
+        serverBootstrap.option(ChannelOption.SO_SNDBUF, 16 * 1024 * 1024)
+                .option(ChannelOption.SO_RCVBUF, 16 * 1024 * 1024)
+                .option(ChannelOption.SO_KEEPALIVE, true)
+                .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 8 * 1024 * 1024));
+        bootstrap.option(ChannelOption.SO_SNDBUF, 16 * 1024 * 1024)
+                .option(ChannelOption.SO_RCVBUF, 16 * 1024 * 1024)
+                .option(ChannelOption.SO_KEEPALIVE, true)
+                .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 8 * 1024 * 1024));
         serverBootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
-//            @Override
-//            protected void initChannel(final SocketChannel ch) throws Exception {
-//                bootstrap.handler(new ChannelInitializer<SocketChannel>() {
-//                    @Override
-//                    protected void initChannel(SocketChannel cliCh) throws Exception {
-//                        cliCh.pipeline().addLast(new ServerChannelDataHandler(ch));
-//                    }
-//                });
-//                ChannelFuture sync = bootstrap.connect(remoteaddr, remotePort).sync();
-//                ch.pipeline().addLast(executor,new ServerChannelDataHandler(sync.channel()));
-//            }
             @Override
             protected void initChannel(SocketChannel ch) throws Exception {
                 //服务端channel，将服务端的数据发送给客户端，所以构造函数参数要传入客户端的channel
                 ch.pipeline().addLast(new IdleStateHandler(READ_IDLE, WRITE_IDLE, ALL_IDLE, TimeUnit.MINUTES))
                         .addLast("idledeal", new IdleEventHandler())
-                        .addLast("serverHandler", new ServerChannelDataHandler(getClientChannel(ch,remoteaddr,remotePort)));
+                        .addLast(new HttpServerCodec())
+                        .addLast(new HttpObjectAggregator(512 * 1024))
+                        .addLast(eventGroup,new HttpForwardHandler(remoteaddr, remotePort));
+//                        .addLast("serverHandler", new ServerChannelDataHandler(getClientChannel(ch,remoteaddr,remotePort)));
             }
         });
 
         ChannelFuture future = serverBootstrap.bind(serverPort);
-        future.channel().closeFuture().addListener((ChannelFutureListener) channelFuture -> {
-            log.info("channel close:" + channelFuture.channel());
-        });
+        future.channel().closeFuture().addListener((ChannelFutureListener) channelFuture
+                -> log.info("channel close:" + channelFuture.channel()));
         log.info("init proxy channel ->>" + future.channel().id() + "|" + serverPort+ "|" +remoteaddr+ "|" +remotePort);
         this.currentChannel = future;
         return future;
     }
 
-    private Channel getClientChannel(SocketChannel ch,String remoteaddr,int remotePort) throws InterruptedException {
-        this.bootstrap
-                .handler(new ChannelInitializer<SocketChannel>() {
-                    @Override
-                    protected void initChannel(SocketChannel socketChannel) {
-                        //客户端端channel，客户端返回的数据给服务端，所以构造函数参数要传入服务端的channel
-                        socketChannel.pipeline().addLast(new IdleStateHandler(READ_IDLE, WRITE_IDLE, ALL_IDLE, TimeUnit.MINUTES))
-                                .addLast("idledeal", new IdleEventHandler())
-                                .addLast("clientHandler", new ClinetChannelDataHandler(ch));
-                    }
-                });
-        ChannelFuture sync = bootstrap.connect(remoteaddr, remotePort).sync();
-        return sync.channel();
-    }
 
 
     public int getServerPort() {

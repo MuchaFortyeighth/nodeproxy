@@ -39,7 +39,7 @@ public class HealthCheckTask {
 
     private static Integer BLOCK_DELAY_LIMIT = 5; //最大允许延迟块高，如果出现了比当前绑定节点高5个以上的 再做切换,作用是缓冲区，防止频繁切换节点
 
-    @Scheduled(fixedDelay = 30000, initialDelay = 1000)
+    @Scheduled(fixedDelay = 15000, initialDelay = 1000)
     void checkAndUpdateProxy() throws InterruptedException {
 //        log.info("-------------start checkAndUpdateProxy------------");
         JSONArray config;

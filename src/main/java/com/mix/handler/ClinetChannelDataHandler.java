@@ -1,10 +1,13 @@
 package com.mix.handler;
 
 
+import com.mix.service.ChannelCounter;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
@@ -31,10 +34,37 @@ public class ClinetChannelDataHandler extends ChannelInboundHandlerAdapter  {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         // 获取读取的数据， 是一个缓冲。
         ByteBuf readBuffer = (ByteBuf) msg;
-//        log.info("get data: " + readBuffer.toString(CharsetUtil.UTF_8));
+        String msgStr = readBuffer.toString(CharsetUtil.UTF_8);
+//        log.info("client read times :" + ChannelCounter.clientReadTimes.addAndGet(1));
         //缓冲区复位
         readBuffer.retain();
-        channel.writeAndFlush(readBuffer);
+        readBuffer.release();
+        if (channel.isActive() && channel.isWritable()) {
+            ChannelFuture cf = channel.writeAndFlush(readBuffer);
+            if (cf.isDone() && cf.cause() != null) {
+                log.error("channelWrite error!", cf.cause());
+                ctx.close();
+            }
+        }
+    }
+
+    @Override
+    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+        if (!ctx.channel().isWritable()) {
+            Channel channel = ctx.channel();
+            log.info("client channel is unwritable, turn off autoread, clientId:{}", channel.id().asShortText());
+            channel.config().setAutoRead(false);
+        }
+    }
+
+    @Override
+    public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception
+    {
+        Channel channel = ctx.channel();
+        if (channel.isWritable()) {
+            log.info("client channel is writable again, turn on autoread, clientId:{}", channel.id().asShortText());
+            channel.config().setAutoRead(true);
+        }
     }
 
     @Override
@@ -46,11 +76,13 @@ public class ClinetChannelDataHandler extends ChannelInboundHandlerAdapter  {
         super.channelActive(ctx);
     }
 
+
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         InetSocketAddress insocket = (InetSocketAddress) ctx.channel().remoteAddress();
         String clientIP = insocket.getAddress().getHostAddress();
         String clientPort = String.valueOf(insocket.getPort());
+        log.info("client inactive times :" + ChannelCounter.clientReadTimes.addAndGet(1));
         log.debug("关闭来自{}：{}的请求，成功回收Channel[{}]",clientIP, clientPort, ctx.channel().id());
         super.channelInactive(ctx);
     }
