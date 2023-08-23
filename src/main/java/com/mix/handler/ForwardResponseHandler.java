@@ -5,6 +5,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -22,19 +23,17 @@ public class ForwardResponseHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        ByteBuf readBuffer = (ByteBuf) msg;
-        String msgStr = readBuffer.toString(CharsetUtil.UTF_8);
-
-//        log.info("server read times :" + ChannelCounter.serverReadTimes.addAndGet(1));
-        //缓冲区复位
-        readBuffer.retain();
-        readBuffer.release();
-        // 将目标服务器的响应发送给原始客户端
-        if (clientChannel.isActive() && clientChannel.isWritable()) {
-            ChannelFuture cf = clientChannel.writeAndFlush(readBuffer);
-            if (cf.isDone() && cf.cause() != null) {
-                log.error("channelWrite error!", cf.cause());
-                ctx.close();
+        if (msg instanceof FullHttpResponse) {
+            FullHttpResponse response = (FullHttpResponse) msg;
+            DefaultHttpHeaders headers = (DefaultHttpHeaders) response.headers();
+            headers.add("Transfer-Encoding","chunked");
+            // 将目标服务器的响应发送给原始客户端
+            if (clientChannel.isActive() && clientChannel.isWritable()) {
+                ChannelFuture cf = clientChannel.writeAndFlush(response);
+                if (cf.isDone() && cf.cause() != null) {
+                    log.error("channelWrite error!", cf.cause());
+                    ctx.close();
+                }
             }
         }
 
