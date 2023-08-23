@@ -73,6 +73,8 @@ public class ProxyServer implements Comparable<ProxyServer>{
                 .option(ChannelOption.SO_RCVBUF, 16 * 1024 * 1024)
                 .option(ChannelOption.SO_KEEPALIVE, true)
                 .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 8 * 1024 * 1024));
+        // 设置响应实体的最大大小为 10MB
+        int maxContentLength = 10485760;
         serverBootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
             @Override
             protected void initChannel(SocketChannel ch) throws Exception {
@@ -80,7 +82,7 @@ public class ProxyServer implements Comparable<ProxyServer>{
                 ch.pipeline().addLast(new IdleStateHandler(READ_IDLE, WRITE_IDLE, ALL_IDLE, TimeUnit.MINUTES))
                         .addLast("idledeal", new IdleEventHandler())
                         .addLast(new HttpServerCodec())
-                        .addLast(new HttpObjectAggregator(512 * 1024))
+                        .addLast(new HttpObjectAggregator(maxContentLength))
                         .addLast(eventGroup,new HttpForwardHandler(remoteaddr, remotePort));
 //                        .addLast("serverHandler", new ServerChannelDataHandler(getClientChannel(ch,remoteaddr,remotePort)));
             }

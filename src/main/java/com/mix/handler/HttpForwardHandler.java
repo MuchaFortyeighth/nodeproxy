@@ -26,6 +26,7 @@ public class HttpForwardHandler extends ChannelInboundHandlerAdapter {
 
             // 创建与目标服务器的连接
             Bootstrap bootstrap = new Bootstrap();
+            int maxContentLength = 10485760;
             bootstrap.group(ctx.channel().eventLoop())
                     .channel(ctx.channel().getClass())
                     .handler(new ChannelInitializer<SocketChannel>() {
@@ -33,7 +34,7 @@ public class HttpForwardHandler extends ChannelInboundHandlerAdapter {
                         protected void initChannel(SocketChannel ch) throws Exception {
                             ChannelPipeline pipeline = ch.pipeline();
                             pipeline.addLast(new HttpClientCodec());
-                            pipeline.addLast(new HttpObjectAggregator(65536));
+                            pipeline.addLast(new HttpObjectAggregator(maxContentLength));
                             pipeline.addLast(new ForwardResponseHandler(ctx.channel()));
                         }
                     });
