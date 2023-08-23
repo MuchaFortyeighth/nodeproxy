@@ -33,7 +33,7 @@ public class HttpForwardHandler extends ChannelInboundHandlerAdapter {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
                             ChannelPipeline pipeline = ch.pipeline();
-                            pipeline.addLast(new HttpClientCodec());
+                            pipeline.addLast(new HttpClientCodec(4096, 8192, maxContentLength));
                             pipeline.addLast(new HttpObjectAggregator(maxContentLength));
                             pipeline.addLast(new ForwardResponseHandler(ctx.channel()));
                         }
