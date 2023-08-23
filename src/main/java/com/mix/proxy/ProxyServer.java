@@ -37,7 +37,6 @@ public class ProxyServer implements Comparable<ProxyServer>{
     static final EventExecutorGroup eventGroup = new DefaultEventExecutorGroup(16);
 
     private ServerBootstrap serverBootstrap;
-    private Bootstrap bootstrap;
     private EventLoopGroup bossgroup;
     private EventLoopGroup workgroup;
     private int serverPort;              //占用端口
@@ -55,22 +54,16 @@ public class ProxyServer implements Comparable<ProxyServer>{
 
     public ChannelFuture init() {
         serverBootstrap = new ServerBootstrap();
-        bootstrap = new Bootstrap();
         if (bossgroup == null){bossgroup = new NioEventLoopGroup();}
         if (workgroup == null){workgroup = new NioEventLoopGroup(64);}
         serverBootstrap.group(bossgroup, workgroup);
         serverBootstrap.channel(NioServerSocketChannel.class);
-        bootstrap.channel(NioSocketChannel.class);
-        bootstrap.group(bossgroup);
+
         //缓冲区设置
         serverBootstrap.option(ChannelOption.SO_BACKLOG, 256);
         // SO_SNDBUF发送缓冲区，SO_RCVBUF接收缓冲区，SO_KEEPALIVE开启心跳监测（保证连接有效）
-        serverBootstrap.option(ChannelOption.SO_SNDBUF, 16 * 1024 * 1024)
-                .option(ChannelOption.SO_RCVBUF, 16 * 1024 * 1024)
-                .option(ChannelOption.SO_KEEPALIVE, true)
-                .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 8 * 1024 * 1024));
-        bootstrap.option(ChannelOption.SO_SNDBUF, 16 * 1024 * 1024)
-                .option(ChannelOption.SO_RCVBUF, 16 * 1024 * 1024)
+        serverBootstrap.option(ChannelOption.SO_SNDBUF, 50 * 1024 * 1024)
+                .option(ChannelOption.SO_RCVBUF, 50 * 1024 * 1024)
                 .option(ChannelOption.SO_KEEPALIVE, true)
                 .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 8 * 1024 * 1024));
         // 设置响应实体的最大大小为 10MB
