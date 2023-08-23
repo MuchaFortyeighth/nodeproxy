@@ -62,8 +62,8 @@ public class ProxyServer implements Comparable<ProxyServer>{
         //缓冲区设置
         serverBootstrap.option(ChannelOption.SO_BACKLOG, 256);
         // SO_SNDBUF发送缓冲区，SO_RCVBUF接收缓冲区，SO_KEEPALIVE开启心跳监测（保证连接有效）
-        serverBootstrap.option(ChannelOption.SO_SNDBUF, 50 * 1024 * 1024)
-                .option(ChannelOption.SO_RCVBUF, 50 * 1024 * 1024)
+        serverBootstrap.option(ChannelOption.SO_SNDBUF, 16 * 1024 * 1024)
+                .option(ChannelOption.SO_RCVBUF, 16 * 1024 * 1024)
                 .option(ChannelOption.SO_KEEPALIVE, true)
                 .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 8 * 1024 * 1024));
         // 设置响应实体的最大大小为 10MB
@@ -74,7 +74,7 @@ public class ProxyServer implements Comparable<ProxyServer>{
                 //服务端channel，将服务端的数据发送给客户端，所以构造函数参数要传入客户端的channel
                 ch.pipeline().addLast(new IdleStateHandler(READ_IDLE, WRITE_IDLE, ALL_IDLE, TimeUnit.MINUTES))
                         .addLast("idledeal", new IdleEventHandler())
-                        .addLast(new HttpServerCodec())
+                        .addLast(new HttpServerCodec(4096, 8192, maxContentLength))
                         .addLast(new HttpObjectAggregator(maxContentLength))
                         .addLast(eventGroup,new HttpForwardHandler(remoteaddr, remotePort));
 //                        .addLast("serverHandler", new ServerChannelDataHandler(getClientChannel(ch,remoteaddr,remotePort)));
