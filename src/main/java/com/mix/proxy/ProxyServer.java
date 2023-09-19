@@ -56,8 +56,8 @@ public class ProxyServer implements Comparable<ProxyServer>{
 
     public ChannelFuture init() {
         serverBootstrap = new ServerBootstrap();
-        if (bossgroup == null){bossgroup = new NioEventLoopGroup();}
-        if (workgroup == null){workgroup = new NioEventLoopGroup(64);}
+        if (bossgroup == null){bossgroup = new NioEventLoopGroup(1);}
+        if (workgroup == null){workgroup = new NioEventLoopGroup(32);}
         serverBootstrap.group(bossgroup, workgroup);
         serverBootstrap.channel(NioServerSocketChannel.class);
 
