@@ -27,11 +27,11 @@ public class RpcService {
     ChannelRegistry registry;
 
     public Integer getNodeBlockHeight(String remoteHost,String networkType){
-        Integer retryTime = registry.getBadHostRetry().get(remoteHost)==null?0:registry.getBadHostRetry().get(remoteHost);
+        int retryTime = registry.getBadHostRetry().get(remoteHost)==null?0:registry.getBadHostRetry().get(remoteHost);
         if (retryTime >=2 ){
             return 0;
         }
-        Integer height = 0;
+        int height = 0;
         if ("ETH".equals(networkType)){
             height = ethBlockNumber(remoteHost);
         } else if ("BTC".equals(networkType)){
@@ -62,7 +62,7 @@ public class RpcService {
             String hex = jsonrst.getString("result").replace("0x","");
             return Integer.parseInt(hex,16);
         }catch (Exception e){
-            log.error("ethBlockNumber error,url = "+ url + "|" + e.getMessage());
+            log.error("ethBlockNumber error,url = {}|{}", url, e.getMessage());
             return 0;
         }
     }
@@ -113,8 +113,20 @@ public class RpcService {
             String hex = jsonrst.getJSONArray("data").getJSONObject(0).getJSONObject("header").getJSONObject("message").getString("slot");
             return Integer.parseInt(hex,10);
         }catch (Exception e){
-            log.error("walletGetnowblock error,url = "+ url + "|" + e.getMessage());
+            log.error("walletGetnowblock error,url = {}|{}", url, e.getMessage());
             return 0;
+        }
+    }
+
+    public JSONObject diskUsage(String remoteHost){
+        String url = "http://" + remoteHost.split(":")[0] + ":9001/disk-usage";
+        try{
+            String result = restTemplate.getForObject(url, String.class);
+            return JSONObject.parseObject(result);
+
+        }catch (Exception e){
+            log.error("diskUsage error,url = {}|{}", url, e.getMessage());
+            return new JSONObject();
         }
     }
 }

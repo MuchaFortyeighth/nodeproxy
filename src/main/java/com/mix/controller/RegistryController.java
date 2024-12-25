@@ -60,4 +60,14 @@ public class RegistryController {
 
         return Result.success(jsonObject);
     }
+
+    @GetMapping(value = "/node/diskusage/{host}")
+    public Result query(@PathVariable(value = "host") String host) {
+        Integer retryTime = registry.getBadHostRetry().get(host)==null?0:registry.getBadHostRetry().get(host);
+        if (retryTime >0 ){
+            registry.getBadHostRetry().put(host,1);
+        }
+        return Result.success(rpcService.diskUsage(host));
+    }
+
 }

@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ChannelRegistry {
     private static ConcurrentHashMap<Integer, ProxyServer> portRegistry = new ConcurrentHashMap<>();
     private static ConcurrentHashMap<String, NodeInfo> nodeInfoRegistry = new ConcurrentHashMap<>();
-    private static ConcurrentHashMap<String, Integer> badHostRetry = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<String, Integer> badHostRetry =  new ConcurrentHashMap<>();
 
     public ConcurrentHashMap<Integer, ProxyServer> getAllRegistry(){
         return portRegistry;

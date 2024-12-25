@@ -1,0 +1,12 @@
+INSERT INTO defi_contracts
+(contract_name, contract_address, primary_category, secondary_category,
+	source_code,
+	source_code_tree,
+	source_code_scan_result)
+VALUES('Lido', '0x5a98fcbea516cf06857215779fd812ca3bef1b32', '金融功能类', '流动性质押',
+$$
+
+$$,
+$$ $$,
+''
+);

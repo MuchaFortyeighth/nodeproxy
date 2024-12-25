@@ -3,9 +3,28 @@ spring:
     name: node_proxy
   profiles:
     active: prod
+  datasource:
+    url: jdbc:postgresql://8.218.23.201:5432/blockscout
+    username: blockscout
+    password: ceWb1MeLBEeOIfk65gU8EjF8
+    hikari:
+      maximum-pool-size: 10  # 最大连接池大小
+      minimum-idle: 5  # 最小空闲连接数
+      max-lifetime: 1800000  # 30分钟，连接最大生命周期
+      idle-timeout: 300000  # 5分钟，连接池中空闲连接的最大空闲时间
+      connection-timeout: 30000  # 连接池连接超时时间，单位毫秒
+      connection-test-query: SELECT 1  # 测试连接是否有效的查询
+  cache:
+    type: simple
 server:
-  port: 9527
+  port: 8087
 
 proxy:
   config:
-    path: ${CONFIG_PATH:./nodeproxy.json}
+    path: F:\tokenview\newgit\nodeproxy\src\main\resources\nodeproxy.json
+mybatis-plus:
+  configuration:
+    cache-enabled: true
+    use-generated-keys: true
+    default-executor-type: REUSE
+    use-actual-param-name: true

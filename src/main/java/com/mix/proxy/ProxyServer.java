@@ -38,7 +38,6 @@ public class ProxyServer implements Comparable<ProxyServer>{
 
     static final EventExecutorGroup eventGroup = new DefaultEventExecutorGroup(16);
 
-    private ServerBootstrap serverBootstrap;
     private EventLoopGroup bossgroup;
     private EventLoopGroup workgroup;
     private int serverPort;              //占用端口
@@ -55,7 +54,7 @@ public class ProxyServer implements Comparable<ProxyServer>{
     }
 
     public ChannelFuture init() {
-        serverBootstrap = new ServerBootstrap();
+        ServerBootstrap serverBootstrap = new ServerBootstrap();
         if (bossgroup == null){bossgroup = new NioEventLoopGroup(1);}
         if (workgroup == null){workgroup = new NioEventLoopGroup(32);}
         serverBootstrap.group(bossgroup, workgroup);
