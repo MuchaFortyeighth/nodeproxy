@@ -1,0 +1,40 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam backgroundColor #F9F9F9
+skinparam nodeBorderColor black
+skinparam nodeFontColor black
+skinparam arrowColor black
+
+' 定义网络节点
+cloud "内网交换机" as InternalNetwork #LightBlue{
+
+}
+
+node "Nginx 服务器" as NginxServer #LightGreen
+
+package "应用服务器网络" as AppServerNetwork #LightGray {
+    node "后端应用服务" as AppServer
+}
+
+package "索引服务器网络" as IndexServerNetwork #LightSalmon {
+    node "索引服务" as IndexServer
+}
+
+package "区块链网络" as BlockchainNetwork #LightGray {
+    node "Lighthouse（信标链客户端）" as Lighthouse #LightSkyBlue
+    node "Geth（执行层客户端）" as Geth #SkyBlue
+    node "其他节点" as OtherNodes
+}
+
+' 定义连接
+UserClient --> InternalNetwork : HTTP/HTTPS
+InternalNetwork --> NginxServer : 反向代理请求
+NginxServer -> AppServer : 请求转发
+AppServer -> IndexServer : 数据请求
+IndexServer --> Lighthouse : 获取区块数据
+IndexServer --> Geth : 获取交易数据
+Lighthouse --> Geth : 数据同步
+Lighthouse --> OtherNodes : 信标链同步
+Geth --> OtherNodes : 执行层同步
+
+@enduml

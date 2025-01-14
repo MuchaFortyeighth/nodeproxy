@@ -1,0 +1,98 @@
+@startuml
+start
+:用户发送漏洞类型查询请求;
+:服务端接收请求;
+:查询漏洞类型数据库;
+if (查询成功?) then (是)
+  :返回漏洞类型列表 (名称+描述);
+else (否)
+  :返回错误信息;
+endif
+stop
+@enduml
+
+
+@startuml
+start
+:用户发送攻防案例列表请求;
+:服务端接收请求;
+:查询案例数据库;
+if (查询成功?) then (是)
+  :返回案例列表 (名称+漏洞类型+合约地址);
+else (否)
+  :返回错误信息;
+endif
+stop
+@enduml
+
+@startuml
+start
+:用户发送模拟攻击请求 (目标合约地址+攻击者地址);
+:服务端接收请求;
+:将目标合约部署到测试环境;
+:执行预定义攻击步骤 (如重入攻击);
+if (攻击成功?) then (是)
+  :生成攻击结果报告 (资金转移+状态变化);
+else (否)
+  :记录攻击失败原因;
+endif
+:返回攻击结果给用户;
+stop
+@enduml
+
+
+@startuml
+class AttackDefenseService {
+    + List<Vulnerability> getVulnerabilityTypes(): List<Vulnerability>
+    + List<AttackCase> getAttackCases(): List<AttackCase>
+    + AttackReport executeAttack(String contractAddress, String attackerAddress): AttackReport
+}
+
+class Vulnerability {
+    - String typeId
+    - String name
+    - String description
+    + String getTypeId(): String
+    + String getName(): String
+    + String getDescription(): String
+}
+
+class AttackCase {
+    - String caseId
+    - String name
+    - String description
+    - String contractAddress
+    - String vulnerabilityType
+    + String getCaseId(): String
+    + String getName(): String
+    + String getDescription(): String
+    + String getContractAddress(): String
+    + String getVulnerabilityType(): String
+}
+
+class AttackReport {
+    - String attackId
+    - String contractAddress
+    - String attackerAddress
+    - List<AttackStep> steps
+    - String result
+    + String getAttackId(): String
+    + String getContractAddress(): String
+    + String getAttackerAddress(): String
+    + List<AttackStep> getSteps(): List<AttackStep>
+    + String getResult(): String
+}
+
+class AttackStep {
+    - String stepType
+    - String description
+    + String getStepType(): String
+    + String getDescription(): String
+}
+
+AttackDefenseService --> Vulnerability : queries
+AttackDefenseService --> AttackCase : manages
+AttackDefenseService --> AttackReport : generates
+AttackReport --> AttackStep : contains
+@enduml
+

@@ -11,17 +11,21 @@ import com.mix.mapper.SimulatedTokenTransferMapper;
 import com.mix.mapper.TokenTransferMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 
 import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class TokenTransferService {
 
     @Autowired
@@ -33,22 +37,28 @@ public class TokenTransferService {
     @Autowired
     private BlocksMapper blocksMapper;
 
-    public IPage<Map<String, Object>> getTokenTransfers(String contractAddress, Long startTime, Long endTime, int current, int size) {
-        // 创建分页对象
-        Page<Map<String, Object>> page = new Page<>(current, size);
+    public IPage<Map<String, Object>> getTokenTransfers(Page<?> page, String contractAddress, Long startTime, Long endTime) {
+        // 转换时间戳为区块高度
+        Long startBlock = null;
+        Long endBlock = null;
+        
+        if (startTime != null) {
+            String startTimeStr = Instant.ofEpochSecond(startTime)
+                .atZone(ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            Block startBlockObj = blocksMapper.getNearestBlock(startTimeStr);
+            startBlock = startBlockObj != null ? startBlockObj.getNumber() : null;
+        }
+        
+        if (endTime != null) {
+            String endTimeStr = Instant.ofEpochSecond(endTime)
+                .atZone(ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            Block endBlockObj = blocksMapper.getNearestBlock(endTimeStr);
+            endBlock = endBlockObj != null ? endBlockObj.getNumber() : null;
+        }
 
-        // 调用 Mapper 方法
-        IPage<Map<String, Object>> result = tokenTransferMapper.getTokenTransfers(page, contractAddress, startTime, endTime);
-
-        // 转换 timestamp 为 LocalDateTime
-        result.getRecords().forEach(record -> {
-            Object transfertime = record.get("transfertime");
-            if (transfertime instanceof java.sql.Timestamp) {
-                record.put("transfertime", ((java.sql.Timestamp) transfertime).toLocalDateTime());
-            }
-        });
-
-        return result;
+        return tokenTransferMapper.getTokenTransfers(page, contractAddress, startBlock, endBlock);
     }
 
 
@@ -70,7 +80,8 @@ public class TokenTransferService {
         transaction.setToAddressHash(toAddress.replace("0x",""));
         transaction.setTransactionHash(transactionHash.replace("0x",""));
         transaction.setBlockNumber(nearestBlock.getNumber());  // 使用最接近区块的 block_number
-        LocalDateTime localDateTime = Instant.ofEpochMilli(nearestBlock.getTimestamp().getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime();
+//        LocalDateTime localDateTime = Instant.ofEpochMilli(nearestBlock.getTimestamp().getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime();
+        LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(transactionReq.getTimestamp()), ZoneId.systemDefault());
         transaction.setTimestamp(localDateTime); // 使用提供的交易时间戳
         transaction.setAmount(transactionReq.getAmount());  // 设置交易金额
         transaction.setTokenContractAddressHash(transactionReq.getTokenContractAddressHash().replace("0x",""));

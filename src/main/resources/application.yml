@@ -18,6 +18,10 @@ spring:
     type: simple
 server:
   port: 8087
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/plain,text/css,application/javascript
+    min-response-size: 1024  # 超过1KB的响应进行压缩
 
 proxy:
   config:

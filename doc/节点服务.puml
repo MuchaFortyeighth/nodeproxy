@@ -1,0 +1,68 @@
+@startuml
+start
+:客户端发送节点列表请求;
+:服务端接收请求;
+if (验证请求合法性?) then (合法)
+  :查询数据库中的节点列表;
+  if (查询成功?) then (成功)
+    :返回节点列表数据;
+  else (失败)
+    :返回查询失败错误信息;
+  endif
+else (不合法)
+  :返回非法请求错误;
+endif
+stop
+@enduml
+
+
+@startuml
+start
+:节点上线，发送注册请求;
+:服务端接收注册信息;
+:记录节点基本信息到数据库;
+:定时轮询节点状态;
+if (节点在线?) then (是)
+  :获取存储使用率和区块高度;
+  :更新数据库信息;
+else (否)
+  :标记节点为离线状态;
+endif
+:对外提供接口服务;
+stop
+@enduml
+
+
+@startuml
+class NodeService {
+    + List<Node> getNodeList(): List<Node>
+    + double getStorageUsage(String nodeId): double
+    + int getCurrentBlockHeight(String nodeId): int
+}
+
+class Node {
+    - String nodeId
+    - String nodeName
+    - String ipAddress
+    - String status
+    - double storageUsage
+    - int currentBlockHeight
+    + String getNodeId(): String
+    + String getNodeName(): String
+    + String getIpAddress(): String
+    + String getStatus(): String
+    + void setStatus(String status): void
+    + double getStorageUsage(): double
+    + int getCurrentBlockHeight(): int
+}
+
+class NodeRepository {
+    + List<Node> findAll(): List<Node>
+    + Node findById(String nodeId): Node
+    + void updateNode(Node node): void
+}
+
+NodeService --> NodeRepository : uses
+NodeService --> Node : manages
+NodeRepository --> Node : persists
+@enduml

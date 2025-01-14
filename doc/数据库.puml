@@ -1,0 +1,52 @@
+@startuml
+entity "Accounts" as accounts {
+    + id : bigint
+    + address : varchar
+    + balance : numeric
+}
+
+entity "Transactions" as transactions {
+    + id : bigint
+    + hash : varchar
+    + block_id : bigint
+    + from_address_id : bigint
+    + to_address_id : bigint
+    + value : numeric
+}
+
+entity "Blocks" as blocks {
+    + id : bigint
+    + hash : varchar
+    + number : bigint
+    + timestamp : timestamp
+}
+
+entity "Logs" as logs {
+    + id : bigint
+    + transaction_id : bigint
+    + event_name : varchar
+    + data : jsonb
+}
+
+entity "Tokens" as tokens {
+    + id : bigint
+    + contract_address_id : bigint
+    + name : varchar
+    + symbol : varchar
+    + decimals : int
+}
+
+entity "Internal Transactions" as internal_transactions {
+    + id : bigint
+    + transaction_id : bigint
+    + from_address_id : bigint
+    + to_address_id : bigint
+    + value : numeric
+}
+
+accounts ||--o{ transactions : "发起/接收"
+blocks ||--o{ transactions : "包含"
+transactions ||--o{ logs : "产生"
+accounts ||--o{ tokens : "持有"
+transactions ||--o{ internal_transactions : "触发"
+@enduml

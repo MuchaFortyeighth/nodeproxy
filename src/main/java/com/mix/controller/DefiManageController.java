@@ -2,11 +2,21 @@ package com.mix.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mix.entity.Result;
+import com.mix.entity.ResultCode;
 import com.mix.entity.dto.DefiContract;
+import com.mix.entity.req.ContractImportRequest;
 import com.mix.service.DefiManageService;
 import com.mix.service.VulnerabilityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/defiContracts")
@@ -16,6 +26,72 @@ public class DefiManageController {
 
     @Autowired
     private VulnerabilityService vulnerabilityService;
+
+    @PostMapping("/import")
+    @ResponseBody
+    public Result importContract(
+            @RequestParam("file") MultipartFile sourceFile,
+            @RequestParam(value = "logo", required = false) MultipartFile logoFile,
+            @RequestParam("compilerVersion") String compilerVersion,
+            @RequestParam("contractName") String contractName,
+            @RequestParam("contractAddress") String contractAddress,
+            @RequestParam("primaryCategory") String primaryCategory,
+            @RequestParam("secondaryCategory") String secondaryCategory) throws IOException {
+
+
+        // 验证合约文件
+        if (!Objects.requireNonNull(sourceFile.getOriginalFilename()).endsWith(".sol")) {
+            return Result.failed(ResultCode.INVALID_PARAM);
+        }
+
+        // 验证logo文件
+        if (logoFile != null && !logoFile.isEmpty()) {
+            if (!isValidLogoFile(logoFile)) {
+                return Result.failed(ResultCode.INVALID_PARAM);
+            }
+            // 保存logo文件
+            saveLogo(logoFile, contractAddress);
+        }
+
+        // 处理合约文件
+        String sourceCode = new String(sourceFile.getBytes(), StandardCharsets.UTF_8);
+        ContractImportRequest request = new ContractImportRequest();
+        request.setSourceCode(sourceCode);
+        request.setCompilerVersion(compilerVersion);
+        request.setContractName(contractName);
+        request.setContractAddress(contractAddress);
+        request.setPrimaryCategory(primaryCategory);
+        request.setSecondaryCategory(secondaryCategory);
+
+        DefiContract contract = defiManageService.importContract(request);
+        return Result.success();
+    }
+
+    @PostMapping("/delete/{contractAddress}")
+    public Result delete(@PathVariable String contractAddress){
+        return Result.success(defiManageService.deleteContract(contractAddress));
+    }
+
+    private boolean isValidLogoFile(MultipartFile file) {
+        String contentType = file.getContentType();
+        return contentType != null && contentType.equals("image/webp");
+    }
+
+    private void saveLogo(MultipartFile file, String contractAddress) throws IOException {
+        File uploadDir = new File("contract-logos");
+        if (!uploadDir.exists()) {
+            uploadDir.mkdirs();
+        }
+
+        String fileName = contractAddress + ".webp";
+        Path destinationPath = Paths.get(uploadDir.getPath(), fileName);
+        file.transferTo(destinationPath);
+    }
+
+    private boolean isValidCompilerVersion(String version) {
+        return version.matches("v\\d+\\.\\d+\\.\\d+\\+commit\\.[a-f0-9]+");
+    }
+
 
     /**
      * 分页查询合约列表，并根据一级分类和二级分类进行过滤
@@ -58,7 +134,11 @@ public class DefiManageController {
         return Result.success(defiManageService.getCategoryTree());
     }
 
-    @GetMapping("/code-scan/{contractAddress}")
+    @GetMapping(
+        value = "/code-scan/{contractAddress}",
+        produces = "application/json;charset=UTF-8"
+    )
+    @ResponseBody
     public Result getVulnerabilityDetails(@PathVariable String contractAddress) {
         return Result.success(vulnerabilityService.getDefiContractVulnerabilityDetails(contractAddress));
     }

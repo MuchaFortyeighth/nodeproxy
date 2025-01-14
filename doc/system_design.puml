@@ -1,0 +1,41 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam backgroundColor #F9F9F9
+skinparam packageBorderColor black
+skinparam packageFontColor black
+
+' 定义分层
+package "共识层" as ConsensusLayer #LightBlue {
+    node "Lighthouse（信标链客户端）" as Lighthouse #LightSkyBlue
+    node "Geth（执行层客户端）" as Geth #SkyBlue
+}
+
+package "索引层" as IndexingLayer #LightGreen {
+    component "API 服务" as BlockscoutAPI #DarkSeaGreen
+    component "区块索引器" as BlockIndexer #PaleGreen
+    component "数据库" as BlockDatabase #LightYellow
+}
+
+package "应用层" as ApplicationLayer #LightYellow {
+    component "数据展示服务" as DataDisplay #PeachPuff
+    component "合约代码编译器" as ContractScanner #Yellow
+    component "模拟交易服务" as TradeSimulation #Orange
+}
+
+' 定义连接
+Lighthouse -> Geth : 数据同步
+Lighthouse --> BlockIndexer : 区块数据推送
+Geth --> BlockIndexer : 交易数据推送
+
+BlockIndexer --> BlockDatabase : 数据存储
+BlockDatabase -> BlockscoutAPI : 数据查询
+
+BlockscoutAPI --> DataDisplay : 数据查询
+BlockscoutAPI --> ContractScanner: 数据查询
+BlockscoutAPI --> TradeSimulation : 数据查询
+
+ContractScanner --> Geth : 合约代码验证
+ContractScanner --> BlockDatabase : 存储数据
+TradeSimulation --> BlockDatabase : 存储数据
+
+@enduml

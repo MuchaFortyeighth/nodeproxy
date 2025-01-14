@@ -19,6 +19,6 @@ public interface SimulatedTokenTransferMapper extends BaseMapper<SimulatedTokenT
             " #{transfer.timestamp}," +
             " #{transfer.amount}," +
             " decode(#{transfer.tokenContractAddressHash},'hex')," +
-            " 'simulated'::character varying);\n")
+            " #{transfer.datasource});\n")
     public int insertOne(@Param("transfer")SimulatedTokenTransfer transfer);
 }

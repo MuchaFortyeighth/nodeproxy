@@ -5,10 +5,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mix.entity.PrimaryCategory;
 import com.mix.entity.SecondaryCategory;
 import com.mix.entity.TreeNode;
+import com.mix.entity.dto.ContractRelationship;
 import com.mix.entity.dto.DefiContract;
+import com.mix.mapper.ContractRelationshipsMapper;
 import com.mix.mapper.DefiContractMapper;
-import com.mix.dto.ContractImportRequest;
-import com.mix.service.SolcCompilerService;
+import com.mix.entity.req.ContractImportRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,9 @@ public class DefiManageService {
     
     @Autowired
     private SolcCompilerService solcCompilerService;
+
+    @Autowired
+    private ContractRelationshipsMapper contractRelationshipsMapper;
 
     /**
      * 返回整体的树状结构，按一级分类和二级分类组织
@@ -117,10 +121,11 @@ public class DefiManageService {
     public DefiContract importContract(ContractImportRequest request) {
         try {
             // 生成AST
-            String ast = solcCompilerService.generateAst(
-                request.getSourceCode(), 
-                request.getCompilerVersion()
-            );
+//            String ast = solcCompilerService.generateLegacyAst(
+//                request.getSourceCode(),
+//                request.getCompilerVersion()
+//            );
+            String ast = "";
 
             // 创建合约实体
             DefiContract contract = new DefiContract();
@@ -128,14 +133,55 @@ public class DefiManageService {
             contract.setContractName(request.getContractName());
             contract.setSourceCode(request.getSourceCode());
             contract.setSourceCodeTree(ast);
+            contract.setPrimaryCategory(request.getPrimaryCategory());
+            contract.setSecondaryCategory(request.getSecondaryCategory());
             
             // 保存到数据库
             defiContractMapper.insert(contract);
-            
+            log.info("import contract success");
             return contract;
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("Failed to import contract", e);
             throw new RuntimeException("Contract import failed", e);
         }
+    }
+
+    public boolean deleteContract(String contractAddress) {
+        log.info("Deleting contract with address: {}", contractAddress);
+
+        // 检查合约是否存在
+        DefiContract existingContract = defiContractMapper.selectOne(
+                new QueryWrapper<DefiContract>()
+                        .eq("contract_address", contractAddress)
+        );
+
+        if (existingContract == null) {
+            log.warn("Contract not found with address: {}", contractAddress);
+            return false;
+        }
+
+        // 执行删除操作
+        int result = defiContractMapper.delete(
+                new QueryWrapper<DefiContract>()
+                        .eq("contract_address", contractAddress)
+        );
+
+        contractRelationshipsMapper.delete(
+                new QueryWrapper<ContractRelationship>()
+                        .eq("source_contract_address", contractAddress)
+        );
+        contractRelationshipsMapper.delete(
+                new QueryWrapper<ContractRelationship>()
+                        .eq("target_contract_address", contractAddress)
+        );
+
+        boolean success = result > 0;
+        if (success) {
+            log.info("Successfully deleted contract with address: {}", contractAddress);
+        } else {
+            log.error("Failed to delete contract with address: {}", contractAddress);
+        }
+
+        return success;
     }
 }

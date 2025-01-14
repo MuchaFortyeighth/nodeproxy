@@ -1,11 +1,14 @@
 package com.mix.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mix.entity.Result;
 import com.mix.entity.req.TransactionReq;
 import com.mix.service.SimulatedTransationService;
 import com.mix.service.TokenTransferService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 
 @RestController
@@ -30,9 +33,9 @@ public class TranscationController {
         if (contractAddress.startsWith("0x")) {
             contractAddress = contractAddress.substring(2).toLowerCase();
         }
-
+        Page<Map<String, Object>> page = new Page<>(current, size);
         // 调用 Service 获取分页结果
-        return Result.success(tokenTransferService.getTokenTransfers(contractAddress, startTime, endTime, current, size));
+        return Result.success(tokenTransferService.getTokenTransfers(page,contractAddress, startTime, endTime));
     }
 
     @PostMapping({"/create"})

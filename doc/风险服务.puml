@@ -1,0 +1,81 @@
+@startuml
+start
+:用户发送市场风险查询请求;
+:服务端接收请求;
+:查询数据库获取风险数据;
+if (查询成功?) then (是)
+  :返回风险状态 (等级+详细信息);
+else (否)
+  :返回错误信息;
+endif
+stop
+@enduml
+
+@startuml
+start
+:用户发送市场参数设置请求;
+:服务端接收请求并验证参数;
+if (参数合法?) then (是)
+  :更新数据库中市场参数;
+  :返回参数设置成功信息;
+else (否)
+  :返回参数验证失败信息;
+endif
+stop
+@enduml
+
+@startuml
+start
+:用户发送风险触发记录查询请求;
+:服务端接收请求;
+:查询数据库获取触发记录;
+if (查询成功?) then (是)
+  :返回触发记录列表;
+else (否)
+  :返回错误信息;
+endif
+stop
+@enduml
+
+@startuml
+start
+:接收市场风险查询请求;
+:从数据库查询风险状态;
+:返回风险状态信息;
+:接收市场参数设置请求;
+:验证参数并更新数据库;
+:返回参数设置结果;
+:接收风险触发记录查询请求;
+:查询触发记录并返回结果;
+stop
+@enduml
+
+@startuml
+class RiskService {
+    + RiskStatus queryRisk(String dimension): RiskStatus
+    + void setRiskParameters(Map<String, Object> params): void
+    + List<RiskTriggerRecord> getRiskTriggerRecords(String type, Date startTime, Date endTime): List<RiskTriggerRecord>
+}
+
+class RiskStatus {
+    - String riskLevel
+    - String description
+    - Map<String, Object> metrics
+    + String getRiskLevel(): String
+    + String getDescription(): String
+    + Map<String, Object> getMetrics(): Map<String, Object>
+}
+
+class RiskTriggerRecord {
+    - Date triggerTime
+    - String riskType
+    - String affectedScope
+    + Date getTriggerTime(): Date
+    + String getRiskType(): String
+    + String getAffectedScope(): String
+}
+
+RiskService --> RiskStatus : queries
+RiskService --> RiskTriggerRecord : manages
+@enduml
+

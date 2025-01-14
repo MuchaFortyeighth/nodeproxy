@@ -11,21 +11,29 @@ import java.util.List;
 @Mapper
 public interface RiskyAddressMapper extends BaseMapper<RiskyAddressSummary> {
 
-    @Select("SELECT\n" +
+    @Select("WITH block_height AS (\n" +
+            "    SELECT MAX(number) - 500 as safe_block_number\n" +
+            "    FROM blocks b\n" +
+            "    WHERE number IS NOT NULL\n" +
+            "),\n" +
+            "recent_txs AS (\n" +
+            "    SELECT t.from_address_hash, t.value\n" +
+            "    FROM transactions t, block_height lt\n" +
+            "    WHERE t.to_address_hash = decode(#{contractAddress}, 'hex')\n" +
+            "      AND t.block_number IS NOT NULL\n" +
+            "      AND t.block_number >= (SELECT safe_block_number - 300000 FROM block_height)\n" +
+            "    ORDER BY t.block_number DESC, t.index DESC\n" +
+            "    LIMIT 300000\n" +
+            ")\n" +
+            "SELECT\n" +
             "    '0x' || encode(t.from_address_hash, 'hex') AS address,\n" +
             "    COUNT(*) AS transaction_count,\n" +
             "    SUM(t.value) / 1e18 AS total_amount_eth,\n" +
-            "    -- 风险评分逻辑：基于交易次数、金额等\n" +
             "    (COUNT(*) * 0.6 + SUM(t.value) / 1e18 * 0.4) AS risk_score\n" +
-            "FROM\n" +
-            "    transactions t\n" +
-            "WHERE\n" +
-            "    t.to_address_hash = decode(#{contractAddress}, 'hex')\n" +
-            "GROUP BY\n" +
-            "    t.from_address_hash\n" +
-            "ORDER BY\n" +
-            "    risk_score DESC\n" +
-            "LIMIT 10;")
+            "FROM recent_txs t\n" +
+            "GROUP BY t.from_address_hash\n" +
+            "ORDER BY risk_score DESC\n" +
+            "LIMIT 10")
     List<RiskyAddressSummary> getRiskyAddresses(@Param("contractAddress") String contractAddress);
 }
 

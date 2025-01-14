@@ -1,0 +1,166 @@
+@startuml
+start
+:客户端发送请求获取合约分类数据;
+:服务端接收请求;
+:从数据库加载合约分类信息;
+if (分类信息存在?) then (是)
+  :构建多层级枚举树结构;
+  :返回分类数据;
+else (否)
+  :返回错误信息;
+endif
+stop
+@enduml
+
+
+@startuml
+start
+:客户端发送分页查询请求 (指定页码和页大小);
+:服务端接收请求;
+:根据分页参数查询数据库;
+if (查询成功?) then (是)
+  :返回指定页的合约列表;
+else (否)
+  :返回错误信息;
+endif
+stop
+@enduml
+
+@startuml
+start
+:客户端发送模糊查询请求 (关键字);
+:服务端接收请求;
+:在数据库中根据关键字执行模糊查询;
+if (匹配到合约数据?) then (是)
+  :返回匹配结果列表;
+else (否)
+  :返回空列表;
+endif
+stop
+@enduml
+
+
+@startuml
+start
+:用户发送风险检测请求;
+:服务端接收请求参数 (验证合法性);
+if (请求合法?) then (是)
+  :开始静态分析;
+  :调用静态分析工具 (Mythril/Slither);
+  if (静态分析成功?) then (是)
+    :返回静态分析结果;
+  else (否)
+    :记录静态分析错误;
+  endif
+
+  :开始动态分析;
+  :部署合约到沙盒环境 (Ganache);
+  :执行模拟交互 (函数调用/转账操作);
+  if (动态分析成功?) then (是)
+    :返回动态分析结果;
+  else (否)
+    :记录动态分析错误;
+  endif
+
+  :汇总分析结果;
+  :生成风险报告 (包含评分和修复建议);
+  :返回风险报告;
+else (否)
+  :返回参数校验错误信息;
+endif
+stop
+@enduml
+
+@startuml
+start
+:客户端上传合约文件;
+:服务端接收文件;
+:验证文件格式 (.sol);
+if (格式合法?) then (是)
+  :解析合约文件信息;
+  :提取合约名称、地址、分类等;
+  :存储合约信息到数据库;
+  :返回导入成功信息;
+else (否)
+  :返回文件格式错误;
+endif
+stop
+@enduml
+
+@startuml
+start
+:客户端上传合约代码或地址;
+:服务端接收请求;
+:调用静态分析工具检测漏洞;
+:收集静态分析结果;
+:部署合约到沙盒环境;
+:执行动态分析测试;
+:收集动态分析结果;
+:生成风险分析报告;
+:返回风险报告;
+stop
+@enduml
+
+@startuml
+class ContractService {
+    + List<Category> getContractCategories(): List<Category>
+    + List<Contract> queryContractsByPage(int page, int size): List<Contract>
+    + List<Contract> searchContracts(String keyword): List<Contract>
+    + void importContract(String contractName, String address, File file, String category): void
+    + RiskReport analyzeContractRisk(String contractId, String code): RiskReport
+    + String getContractLogo(String contractAddress): String
+}
+
+class Category {
+    - String categoryId
+    - String categoryName
+    - List<Category> subCategories
+    + String getCategoryId(): String
+    + String getCategoryName(): String
+    + List<Category> getSubCategories(): List<Category>
+}
+
+class Contract {
+    - String contractId
+    - String contractName
+    - String contractAddress
+    - String logoUrl
+    - String primaryCategory
+    - String secondaryCategory
+    + String getContractId(): String
+    + String getContractName(): String
+    + String getContractAddress(): String
+    + String getLogoUrl(): String
+    + String getPrimaryCategory(): String
+    + String getSecondaryCategory(): String
+}
+
+class RiskReport {
+    - String contractId
+    - int riskScore
+    - List<Risk> risks
+    + String getContractId(): String
+    + int getRiskScore(): int
+    + List<Risk> getRisks(): List<Risk>
+    + void addRisk(Risk risk): void
+}
+
+class Risk {
+    - String riskType
+    - String severity
+    - String description
+    - String recommendation
+    + String getRiskType(): String
+    + String getSeverity(): String
+    + String getDescription(): String
+    + String getRecommendation(): String
+}
+
+ContractService --> Category : uses
+ContractService --> Contract : manages
+ContractService --> RiskReport : generates
+RiskReport --> Risk : contains
+@enduml
+
+
+

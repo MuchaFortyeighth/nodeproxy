@@ -3,10 +3,12 @@ INSERT INTO defi_contracts
 	source_code,
 	source_code_tree,
 	source_code_scan_result)
-VALUES('Lido', '0x5a98fcbea516cf06857215779fd812ca3bef1b32', '金融功能类', '流动性质押',
+VALUES('Enzyme Finance', '0x9c354503c38481a7a7a51629142963f98ecc12d0', '金融功能类', '收益率',
 $$
 
 $$,
-$$ $$,
+$$
+
+$$,
 ''
 );

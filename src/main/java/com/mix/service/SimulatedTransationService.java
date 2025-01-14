@@ -167,10 +167,11 @@ public class SimulatedTransationService extends ServiceImpl<MarketParamMapper, M
             transaction.setFromAddressHash(generateRandomAddress().replace("0x",""));
             transaction.setToAddressHash(generateRandomAddress().replace("0x",""));
             transaction.setTransactionHash(IdWorker.get32UUID().replace("0x",""));
-            LocalDateTime localDateTime = startTime.plusSeconds(random.nextInt(600));//时间随机分布在 10 分钟内
+            //TODO
+            LocalDateTime localDateTime = startTime.plusSeconds(random.nextInt(30));
             Block nearestBlock = tokenTransferService.getNearestBlock(localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
             transaction.setBlockNumber(nearestBlock.getNumber());
-            transaction.setTimestamp(LocalDateTime.ofInstant(Instant.ofEpochMilli(nearestBlock.getTimestamp().getTime()), ZoneId.systemDefault()));
+            transaction.setTimestamp(localDateTime);
             transaction.setAmount(BigDecimal.valueOf(random.nextDouble() * marketParam.getPoolBalance()/1000000));
             transaction.setTokenContractAddressHash(contractAddress.replace("0x",""));
             transaction.setDatasource("agent");
@@ -325,6 +326,7 @@ public class SimulatedTransationService extends ServiceImpl<MarketParamMapper, M
         MarketParam marketParam = marketParamMapper.selectById(contractAddress);
         if (marketParam != null) {
             log.info("MarketParam found in database: {}", marketParam);
+            marketParam.setTransactionTime(0);
             return marketParam;
         }
 

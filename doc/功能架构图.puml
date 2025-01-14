@@ -1,0 +1,39 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam backgroundColor #F9F9F9
+skinparam packageBorderColor black
+skinparam packageFontColor black
+
+' 定义顶层应用功能模块
+package "应用功能" as ApplicationLayer #LightYellow {
+    component "数据展示服务" as DataDisplay #PeachPuff
+    note right of DataDisplay
+      - 显示区块信息
+      - 风险交易TOP榜
+      - 交易流向展示
+      - 市场风险分析
+    end note
+
+    component "合约代码编译器" as ContractScanner #Yellow
+    note right of ContractScanner
+      - 合约代码编译
+      - 合约代码静态分析
+      - 调用 Geth 验证合约
+    end note
+
+    component "模拟交易服务" as TradeSimulation #Orange
+    note right of TradeSimulation
+      - 交易创建与执行
+      - 模拟风险交易
+      - 调用 Geth 提交交易
+    end note
+}
+
+' 定义功能间的交互
+DataDisplay --> ContractScanner : 数据支持
+DataDisplay --> TradeSimulation : 数据支持
+ContractScanner --> TradeSimulation : 合约验证支持
+ContractScanner --> Geth : 验证合约代码
+TradeSimulation --> Geth : 提交交易
+
+@enduml
