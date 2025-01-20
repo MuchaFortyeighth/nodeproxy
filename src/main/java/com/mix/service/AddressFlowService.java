@@ -30,4 +30,8 @@ public class AddressFlowService {
         return riskyAddressMapper.getRiskyAddresses(contractAddress);
     }
 
+    public List<RiskyAddressSummary> getRiskyAddresses(String contractAddress, String addressPattern) {
+        return riskyAddressMapper.getRiskyAddressesWithPattern(contractAddress, addressPattern);
+    }
+
 }

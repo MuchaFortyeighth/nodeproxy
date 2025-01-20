@@ -99,7 +99,11 @@ public class DefiManageService {
             !info.getColumn().equals("source_code") && 
             !info.getColumn().equals("source_code_tree"));
             
-        queryWrapper.like("contract_name", contractName);
+        // 将入参转换为小写
+        String lowerContractName = contractName.toLowerCase();
+        
+        // 使用 apply 方法来直接写入 SQL 条件，使用 ILIKE 实现大小写不敏感
+        queryWrapper.apply("contract_name ILIKE {0}", "%" + lowerContractName + "%");
         
         return defiContractMapper.selectList(queryWrapper);
     }

@@ -42,13 +42,15 @@ CREATE INDEX idx_simulated_timestamp ON simulated_token_transfers (timestamp);
 CREATE INDEX idx_simulated_token_contract_address_hash ON simulated_token_transfers (token_contract_address_hash);
 
 
-CREATE TABLE market_parameters (
-    contract_address VARCHAR(255) PRIMARY KEY,
-    transaction_time BIGINT,
-    annualized_rate DECIMAL,
-    pool_balance BIGINT,
-    market_volatility INT,
-    slippage DECIMAL
+CREATE TABLE public.market_parameters (
+	contract_address varchar(255) NOT NULL,
+	transaction_time int8 NULL,
+	annualized_rate numeric NULL,
+	pool_balance int8 NULL,
+	slippage numeric NULL,
+	collateral_volatility int4 NULL,
+	debt_volatility int4 NULL,
+	CONSTRAINT market_parameters_pkey PRIMARY KEY (contract_address)
 );
 
 CREATE TABLE risk_log (

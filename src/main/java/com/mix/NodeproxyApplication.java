@@ -9,6 +9,9 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.File;
+import java.util.Objects;
+
 @EnableScheduling
 @SpringBootApplication
 @EnableCaching
@@ -16,6 +19,27 @@ public class NodeproxyApplication {
 
 	public static void main(String[] args) {
 		ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.ADVANCED);
+		String assetsPath = "/root/java/assets/blockchains/ethereum/assets";
+		File assetsDir = new File(assetsPath);
+
+		if (assetsDir.exists() && assetsDir.isDirectory()) {
+			for (File dir : Objects.requireNonNull(assetsDir.listFiles())) {
+				if (dir.isDirectory()) {
+					String lowerCaseName = dir.getName().toLowerCase();
+					File lowerCaseDir = new File(assetsDir, lowerCaseName);
+					if (!lowerCaseDir.exists()) {
+						boolean renamed = dir.renameTo(lowerCaseDir);
+						if (renamed) {
+							System.out.println("Renamed: " + dir.getName() + " -> " + lowerCaseName);
+						} else {
+							System.err.println("Failed to rename: " + dir.getName());
+						}
+					}
+				}
+			}
+		} else {
+			System.err.println("Assets directory not found.");
+		}
 		SpringApplication.run(NodeproxyApplication.class, args);
 	}
 

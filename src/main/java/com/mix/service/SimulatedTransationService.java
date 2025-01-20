@@ -207,6 +207,7 @@ public class SimulatedTransationService extends ServiceImpl<MarketParamMapper, M
 
         log.info("Generated pool balance: {} for contract address: {}", poolBalance, marketParam.getContractAddress());
 
+        // 检查流动性
         if (marketParam.getPoolBalance() < poolBalance * 0.4) {
             riskScore += 3;
             desList.add(RiskType.LIQUIDITY_LOW.getName());
@@ -215,18 +216,17 @@ public class SimulatedTransationService extends ServiceImpl<MarketParamMapper, M
             details.add(new RiskDetail(false, RiskType.LIQUIDITY_GOOD.getName(), RiskType.LIQUIDITY_GOOD.getDescription()));
         }
 
-        if (marketParam.getMarketVolatility() > 60) {
+        // 检查资产波动性（取抵押资产和借贷资产波动的最大值）
+        int maxVolatility = Math.max(marketParam.getCollateralVolatility(), marketParam.getDebtVolatility());
+        if (maxVolatility > 60) {
             riskScore += 4;
-            desList.add(RiskType.MARKET_VOLATILITY_HIGH.getName());
-            details.add(new RiskDetail(true, RiskType.MARKET_VOLATILITY_HIGH.getName(), RiskType.MARKET_VOLATILITY_HIGH.getDescription()));
-        } else if (marketParam.getMarketVolatility() < 20) {
-            riskScore += 2;
-            desList.add(RiskType.MARKET_VOLATILITY_LOW.getName());
-            details.add(new RiskDetail(true, RiskType.MARKET_VOLATILITY_LOW.getName(), RiskType.MARKET_VOLATILITY_LOW.getDescription()));
+            desList.add(RiskType.ASSET_VOLATILITY_HIGH.getName());
+            details.add(new RiskDetail(true, RiskType.ASSET_VOLATILITY_HIGH.getName(), RiskType.ASSET_VOLATILITY_HIGH.getDescription()));
         } else {
-            details.add(new RiskDetail(false, RiskType.MARKET_VOLATILITY_GOOD.getName(), RiskType.MARKET_VOLATILITY_GOOD.getDescription()));
+            details.add(new RiskDetail(false, RiskType.ASSET_VOLATILITY_GOOD.getName(), RiskType.ASSET_VOLATILITY_GOOD.getDescription()));
         }
 
+        // 检查滑点
         if (marketParam.getSlippage() > 5.0) {
             riskScore += 3;
             desList.add(RiskType.SLIPPAGE_HIGH.getName());
@@ -235,22 +235,10 @@ public class SimulatedTransationService extends ServiceImpl<MarketParamMapper, M
             details.add(new RiskDetail(false, RiskType.SLIPPAGE_LOW.getName(), RiskType.SLIPPAGE_LOW.getDescription()));
         }
 
-        if (marketParam.getAnnualizedRate() > 20.0) {
-            riskScore += 2;
-            desList.add(RiskType.HIGH_YIELD.getName());
-            details.add(new RiskDetail(true, RiskType.HIGH_YIELD.getName(), RiskType.HIGH_YIELD.getDescription()));
-        } else if (marketParam.getAnnualizedRate() < 2.0) {
-            riskScore += 1;
-            desList.add(RiskType.LOW_YIELD.getName());
-            details.add(new RiskDetail(true, RiskType.LOW_YIELD.getName(), RiskType.LOW_YIELD.getDescription()));
-        } else {
-            details.add(new RiskDetail(false, RiskType.YIELD_GOOD.getName(), RiskType.YIELD_GOOD.getDescription()));
-        }
-
         RiskLevel riskLevel;
-        if (riskScore >= 10) {
+        if (riskScore >= 8) {
             riskLevel = RiskLevel.CRITICAL;
-        } else if (riskScore >= 6) {
+        } else if (riskScore >= 5) {
             riskLevel = RiskLevel.HIGH;
         } else if (riskScore >= 3) {
             riskLevel = RiskLevel.MEDIUM;
@@ -260,10 +248,10 @@ public class SimulatedTransationService extends ServiceImpl<MarketParamMapper, M
 
         log.info("Risk assessment complete. Level: {}, Score: {}, Details: {}", riskLevel, riskScore, details);
         return new RiskAssessmentResult(
-                marketParam.getContractAddress()
-                ,riskLevel
-                ,String.join(",", desList)
-                ,details);
+                marketParam.getContractAddress(),
+                riskLevel,
+                String.join(",", desList),
+                details);
     }
 
     public void saveOrUpdateContractParams(MarketParam param) {
@@ -340,7 +328,9 @@ public class SimulatedTransationService extends ServiceImpl<MarketParamMapper, M
         MarketParam params = new MarketParam();
         params.setAnnualizedRate(random.nextDouble() * 15);
         params.setPoolBalance(generateBalance(contractAddress, timeDiff));
-        params.setMarketVolatility(10 + random.nextInt(31));
+        // 分别生成抵押资产和借贷资产的波动性
+        params.setCollateralVolatility(10 + random.nextInt(31));
+        params.setDebtVolatility(10 + random.nextInt(31));
         params.setSlippage(random.nextDouble());
 
         log.info("Generated parameters: {}", params);

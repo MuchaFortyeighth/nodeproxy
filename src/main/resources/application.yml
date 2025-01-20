@@ -16,6 +16,7 @@ spring:
       connection-test-query: SELECT 1  # 测试连接是否有效的查询
   cache:
     type: simple
+
 server:
   port: 8087
   compression:

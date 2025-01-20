@@ -12,6 +12,7 @@ public class MarketParam {
     private long transactionTime;
     private double annualizedRate;
     private long poolBalance;
-    private int marketVolatility;
+    private int collateralVolatility;    // 抵押资产波动
+    private int debtVolatility;          // 借贷资产波动
     private double slippage;
 }
