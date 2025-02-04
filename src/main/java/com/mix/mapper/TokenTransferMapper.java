@@ -2,10 +2,12 @@ package com.mix.mapper;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.mix.entity.dto.TokenTransferDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -69,4 +71,22 @@ public interface TokenTransferMapper {
                                                @Param("contractAddress") String contractAddress,
                                                @Param("startBlock") Long startBlock,
                                                @Param("endBlock") Long endBlock);
+
+    @Select("SELECT " +
+            "    COALESCE(t.symbol, 'UNKNOWN') as tokensymbol, " +
+            "    stt.amount, " +
+            "    stt.timestamp as transfertime, " +
+            "    encode(stt.to_address_hash, 'hex') as toaddress, " +
+            "    stt.datasource, " +
+            "    stt.block_number as blocknumber, " +
+            "    encode(stt.transaction_hash, 'hex') as transactionhash, " +
+            "    encode(stt.from_address_hash, 'hex') as fromaddress " +
+            "FROM simulated_token_transfers stt " +
+            "LEFT JOIN tokens t ON t.contract_address_hash = stt.token_contract_address_hash " +
+            "WHERE (#{startTime}::timestamp IS NULL OR stt.timestamp >= #{startTime}) " +
+            "AND (#{endTime}::timestamp IS NULL OR stt.timestamp <= #{endTime}) " +
+            "ORDER BY stt.timestamp DESC")
+    IPage<TokenTransferDTO> queryTransfers(Page<TokenTransferDTO> page,
+                                           @Param("startTime") LocalDateTime startTime,
+                                           @Param("endTime") LocalDateTime endTime);
 }

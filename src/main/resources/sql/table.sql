@@ -76,3 +76,30 @@ CREATE TABLE contract_relationships (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- 记录创建时间
     UNIQUE (source_contract_address, target_contract_address, token)  -- 保证唯一性
 );
+
+CREATE TABLE public.wallet_token_balance (
+    id serial4 NOT NULL,
+    contract_address varchar(42) NOT NULL,
+    balance numeric(36, 18) NOT NULL,
+    "timestamp" timestamp NOT NULL,
+    CONSTRAINT wallet_token_balance_pkey PRIMARY KEY (id),
+    CONSTRAINT wallet_token_balance_token_time_key UNIQUE (contract_address, "timestamp")
+);
+
+CREATE INDEX idx_wallet_token_balance_time ON public.wallet_token_balance ("timestamp");
+
+-- 初始化 USDT 余额 (1000 USDT)
+INSERT INTO wallet_token_balance (contract_address, balance, timestamp)
+VALUES (
+    '0xdac17f958d2ee523a2206206994597c13d831ec7',
+    1000.000000000000000000,
+    NOW() - INTERVAL '180 days'
+);
+
+-- 初始化 Lido 余额 (10 Lido)
+INSERT INTO wallet_token_balance (contract_address, balance, timestamp)
+VALUES (
+    '0x5a98fcbea516cf06857215779fd812ca3bef1b32',
+    10.000000000000000000,
+    NOW() - INTERVAL '180 days'
+);
