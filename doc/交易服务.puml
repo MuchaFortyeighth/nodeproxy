@@ -1,0 +1,84 @@
+@startuml
+start
+:用户发送手动交易创建请求;
+:服务端接收请求并验证参数;
+if (参数合法?) then (是)
+  :存储交易信息到数据库;
+  :返回交易创建成功信息;
+else (否)
+  :返回参数验证失败信息;
+endif
+stop
+@enduml
+
+
+@startuml
+start
+:用户发送交易生成请求 (指定规则);
+:服务端接收请求并解析规则;
+:根据规则生成交易列表;
+:将交易记录存储到数据库;
+:返回生成的交易列表信息;
+stop
+@enduml
+
+@startuml
+start
+:用户发送交易流向分析请求 (指定地址);
+:服务端接收请求;
+:查询交易流入和流出数据;
+:计算交易流向数据;
+:分析高风险交易 (基于风险得分);
+:返回分析结果和Top榜;
+stop
+@enduml
+
+@startuml
+class TransactionService {
+    + Transaction createManualTransaction(String from, String to, double amount, String type): Transaction
+    + List<Transaction> generateTransactions(TransactionRule rule): List<Transaction>
+    + FlowAnalysis analyzeTransactionFlow(String address): FlowAnalysis
+}
+
+class Transaction {
+    - String transactionId
+    - String fromAddress
+    - String toAddress
+    - double amount
+    - String type
+    - String status
+    + String getTransactionId(): String
+    + String getFromAddress(): String
+    + String getToAddress(): String
+    + double getAmount(): double
+    + String getType(): String
+    + String getStatus(): String
+}
+
+class TransactionRule {
+    - int count
+    - double minAmount
+    - double maxAmount
+    - String targetAddress
+    + int getCount(): int
+    + double getMinAmount(): double
+    + double getMaxAmount(): double
+    + String getTargetAddress(): String
+}
+
+class FlowAnalysis {
+    - String address
+    - List<Transaction> inflows
+    - List<Transaction> outflows
+    - List<Transaction> highRiskTransactions
+    + String getAddress(): String
+    + List<Transaction> getInflows(): List<Transaction>
+    + List<Transaction> getOutflows(): List<Transaction>
+    + List<Transaction> getHighRiskTransactions(): List<Transaction>
+}
+
+TransactionService --> Transaction : manages
+TransactionService --> TransactionRule : uses
+TransactionService --> FlowAnalysis : generates
+FlowAnalysis --> Transaction : contains
+@enduml
