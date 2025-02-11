@@ -1,7 +1,9 @@
 package com.mix.service;
 
+import com.mix.entity.TransactionType;
 import com.mix.entity.dto.WalletTokenBalance;
 import com.mix.entity.dto.WalletValuePoint;
+import com.mix.entity.req.TransactionReq;
 import com.mix.mapper.WalletTokenBalanceMapper;
 import com.mix.mapper.TokenPriceHistoryMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,20 +13,24 @@ import java.time.LocalDateTime;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import java.math.RoundingMode;
+import java.time.Instant;
 
 @Slf4j
 @Service
 public class WalletBalanceService {
-    
+
     private static final String USDT_ADDRESS = "0xdac17f958d2ee523a2206206994597c13d831ec7";
     private static final String LIDO_ADDRESS = "0x5a98fcbea516cf06857215779fd812ca3bef1b32";
-    
+
+
     @Autowired
     private WalletTokenBalanceMapper walletTokenBalanceMapper;
-    
+
     @Autowired
     private TokenPriceHistoryMapper tokenPriceHistoryMapper;
-    
+
+
+
     /**
      * 初始化钱包余额
      */
@@ -35,22 +41,22 @@ public class WalletBalanceService {
         // 初始化Lido余额
         updateBalance(LIDO_ADDRESS, new BigDecimal("10"), startTime);
     }
-    
+
     /**
      * 更新钱包余额
      */
     public void updateBalance(String tokenAddress, BigDecimal amount, LocalDateTime timestamp) {
         BigDecimal currentBalance = getCurrentBalance(tokenAddress);
         BigDecimal newBalance = currentBalance.add(amount);
-        
+
         WalletTokenBalance balance = new WalletTokenBalance();
         balance.setContractAddress(tokenAddress);
         balance.setBalance(newBalance);
         balance.setTimestamp(timestamp);
-        
+
         walletTokenBalanceMapper.insertOrUpdateBalance(balance);
     }
-    
+
     /**
      * 获取当前余额
      */
@@ -58,39 +64,45 @@ public class WalletBalanceService {
         BigDecimal balance = walletTokenBalanceMapper.getCurrentBalance(tokenAddress);
         return balance != null ? balance : BigDecimal.ZERO;
     }
-    
+
     /**
      * 获取钱包资产价值曲线
      */
-    public List<WalletValuePoint> getWalletValueCurve(LocalDateTime startTime, LocalDateTime endTime) {
-        return walletTokenBalanceMapper.getWalletValueCurve(startTime, endTime);
+    public List<WalletValuePoint> getWalletValueCurve(LocalDateTime startTime,
+                                                     LocalDateTime endTime,
+                                                     String contractAddress) {
+        return walletTokenBalanceMapper.getWalletValueCurve(startTime, endTime, contractAddress);
     }
 
     /**
      * 获取钱包按小时统计的资产价值曲线
      */
-    public List<WalletValuePoint> getWalletValueCurveByHour(LocalDateTime startTime, LocalDateTime endTime) {
-        return walletTokenBalanceMapper.getWalletValueCurveByHour(startTime, endTime);
+    public List<WalletValuePoint> getWalletValueCurveByHour(LocalDateTime startTime,
+                                                           LocalDateTime endTime,
+                                                           String contractAddress) {
+        return walletTokenBalanceMapper.getWalletValueCurveByHour(startTime, endTime, contractAddress);
     }
 
     /**
      * 获取当前总资产估值
      */
-    public BigDecimal getCurrentTotalValue() {
-        return walletTokenBalanceMapper.getCurrentTotalValue();
+    public BigDecimal getCurrentTotalValue(String contractAddress) {
+        return walletTokenBalanceMapper.getCurrentTotalValue(contractAddress);
     }
 
     /**
      * 计算资产变动百分比
      */
-    public BigDecimal calculateValueChangePercentage(LocalDateTime startTime, LocalDateTime endTime) {
-        List<WalletValuePoint> valueCurve = getWalletValueCurve(startTime, endTime);
-        if (valueCurve.isEmpty()) {
+    public BigDecimal calculateValueChangePercentage(LocalDateTime startTime,
+                                                   LocalDateTime endTime,
+                                                   String contractAddress) {
+        List<WalletValuePoint> curve = getWalletValueCurve(startTime, endTime, contractAddress);
+        if (curve.isEmpty()) {
             return BigDecimal.ZERO;
         }
 
-        BigDecimal startValue = valueCurve.get(0).getValueUSD();
-        BigDecimal endValue = valueCurve.get(valueCurve.size() - 1).getValueUSD();
+        BigDecimal startValue = curve.get(0).getValueUSD();
+        BigDecimal endValue = curve.get(curve.size() - 1).getValueUSD();
 
         if (startValue.compareTo(BigDecimal.ZERO) == 0) {
             return BigDecimal.ZERO;
@@ -126,4 +138,5 @@ public class WalletBalanceService {
         }
         updateBalance(USDT_ADDRESS, amount, LocalDateTime.now());
     }
+
 } 

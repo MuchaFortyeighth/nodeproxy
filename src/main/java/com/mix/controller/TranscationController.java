@@ -40,7 +40,7 @@ public class TranscationController {
 
     @PostMapping({"/create"})
     public Result setParameters(@RequestBody TransactionReq transactionReq) {
-        tokenTransferService.createTransaction(transactionReq);
+        tokenTransferService.createTransferRecord(transactionReq);
         return Result.success();
     }
 

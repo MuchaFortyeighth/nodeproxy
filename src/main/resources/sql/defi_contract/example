@@ -3,7 +3,7 @@ INSERT INTO defi_contracts
 	source_code,
 	source_code_tree,
 	source_code_scan_result)
-VALUES('Enzyme Finance', '0x9c354503c38481a7a7a51629142963f98ecc12d0', '金融功能类', '收益率',
+VALUES('PERP', '0xbc396689893d065f41bc2c6ecbee5e0085233447', '衍生品', '永续合约',
 $$
 
 $$,

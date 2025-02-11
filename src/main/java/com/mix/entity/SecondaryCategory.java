@@ -23,7 +23,14 @@ public enum SecondaryCategory {
     FINANCIAL_INSURANCE("保险", PrimaryCategory.FINANCIAL),
     FINANCIAL_LENDING("借贷", PrimaryCategory.FINANCIAL),
     FINANCIAL_YIELD("收益率", PrimaryCategory.FINANCIAL),
-    FINANCIAL_LIQUIDITY_STAKING("流动性质押", PrimaryCategory.FINANCIAL);
+    FINANCIAL_LIQUIDITY_MINING("流动性挖矿", PrimaryCategory.FINANCIAL),
+    FINANCIAL_STAKING_MINING("质押挖矿", PrimaryCategory.FINANCIAL),
+
+    //衍生品
+    DERIVATIVES_PERPETUAL_CONTRACTS("永续合约",PrimaryCategory.DERIVATIVES),
+    DERIVATIVES_OPTIONS_CONTRACTS("期权合约",PrimaryCategory.DERIVATIVES),
+    DERIVATIVES_FUTURES_CONTRACTS("期货合约",PrimaryCategory.DERIVATIVES),
+    DERIVATIVES_RATE_CONTRACTS("利率衍生品",PrimaryCategory.DERIVATIVES);
 
     private final String category;
     private final PrimaryCategory primaryCategory;
