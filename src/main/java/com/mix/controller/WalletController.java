@@ -34,13 +34,13 @@ public class WalletController {
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
             @RequestParam(required = false) String contractAddress) {
         LocalDateTime startTime = startDate.atStartOfDay();
-        LocalDateTime endTime = endDate.atTime(23, 59, 59);
+        LocalDateTime endTime = endDate.atStartOfDay();
         List<WalletValuePoint> curve = walletBalanceService.getWalletValueCurve(startTime, endTime, contractAddress);
 
         // 格式化每个 WalletValuePoint 的 valueUSD 为两位小数
         curve.forEach(point -> point.setValueUSD(point.getValueUSD().setScale(2, RoundingMode.HALF_UP)));
 
-        curve.remove(curve.size()-1);
+//        curve.remove(curve.size()-1);
         return Result.success(curve);
     }
 

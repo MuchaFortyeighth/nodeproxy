@@ -21,11 +21,11 @@ public interface TokenTransferMapper {
             "    FROM token_transfers tt\n" +
             "    WHERE tt.token_contract_address_hash = decode(#{contractAddress}, 'hex')\n" +
             "        AND tt.block_consensus = true\n" +
-            "        <if test='startBlock != null'>\n" +
-            "            AND tt.block_number &gt;= #{startBlock}\n" +
+            "        <if test='startTime != null'>\n" +
+            "            AND tt.inserted_at &gt;= to_timestamp(#{startTime})\n" +
             "        </if>\n" +
-            "        <if test='endBlock != null'>\n" +
-            "            AND tt.block_number &lt;= #{endBlock}\n" +
+            "        <if test='endTime != null'>\n" +
+            "            AND tt.inserted_at &lt;= to_timestamp(#{endTime})\n" +
             "        </if>\n" +
             "    ORDER BY tt.block_number DESC, tt.log_index DESC\n" +
             "    LIMIT 1000\n" +
@@ -56,11 +56,11 @@ public interface TokenTransferMapper {
             "    FROM simulated_token_transfers stt\n" +
             "    LEFT JOIN tokens t ON stt.token_contract_address_hash = t.contract_address_hash\n" +
             "    WHERE stt.token_contract_address_hash = decode(#{contractAddress}, 'hex')\n" +
-            "        <if test='startBlock != null'>\n" +
-            "            AND stt.block_number &gt;= #{startBlock}\n" +
+            "        <if test='startTime != null'>\n" +
+            "            AND stt.timestamp &gt;= to_timestamp(#{startTime})\n" +
             "        </if>\n" +
-            "        <if test='endBlock != null'>\n" +
-            "            AND stt.block_number &lt;= #{endBlock}\n" +
+            "        <if test='endTime != null'>\n" +
+            "            AND stt.timestamp &lt;= to_timestamp(#{endTime})\n" +
             "        </if>\n" +
             "    ORDER BY stt.block_number DESC\n" +
             "    LIMIT 1000\n" +
@@ -69,8 +69,8 @@ public interface TokenTransferMapper {
             "</script>")
     IPage<Map<String, Object>> getTokenTransfers(Page<?> page,
                                                @Param("contractAddress") String contractAddress,
-                                               @Param("startBlock") Long startBlock,
-                                               @Param("endBlock") Long endBlock);
+                                               @Param("startTime") Long startTime,
+                                               @Param("endTime") Long endTime);
 
     @Select("SELECT " +
             "    COALESCE(t.symbol, 'UNKNOWN') as tokensymbol, " +

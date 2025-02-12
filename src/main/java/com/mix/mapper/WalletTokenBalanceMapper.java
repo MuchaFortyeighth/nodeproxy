@@ -32,7 +32,7 @@ public interface WalletTokenBalanceMapper extends BaseMapper<WalletTokenBalance>
             "ORDER BY timestamp DESC LIMIT 1")
     BigDecimal getLatestBalance(@Param("contractAddress") String contractAddress,
                                @Param("timestamp") LocalDateTime timestamp);
-    
+
     @Select("WITH RECURSIVE dates AS ( " +
             "    SELECT date_trunc('day', #{startTime}::timestamp) as date " +
             "    UNION ALL " +
@@ -40,36 +40,44 @@ public interface WalletTokenBalanceMapper extends BaseMapper<WalletTokenBalance>
             "    FROM dates " +
             "    WHERE date < #{endTime}::timestamp " +
             "), " +
-            "all_tokens AS ( " +
+            "distinct_tokens AS ( " +
             "    SELECT DISTINCT contract_address " +
             "    FROM wallet_token_balance " +
             "    WHERE #{contractAddress}::varchar IS NULL " +
             "          OR contract_address ILIKE #{contractAddress} " +
             "), " +
+            "all_balances AS ( " +
+            "    SELECT contract_address, balance, timestamp " +
+            "    FROM wallet_token_balance " +
+            "    WHERE contract_address IN (SELECT contract_address FROM distinct_tokens) " +
+            "), " +
             "daily_balances AS ( " +
             "    SELECT d.date, " +
-            "           t.contract_address, " +
-            "           (SELECT balance " +
-            "            FROM wallet_token_balance w " +
-            "            WHERE w.contract_address ILIKE t.contract_address " +
-            "            AND w.timestamp <= d.date " +
-            "            ORDER BY w.timestamp DESC " +
-            "            LIMIT 1) as balance " +
+            "           dt.contract_address, " +
+            "           COALESCE(( " +
+            "               SELECT balance " +
+            "               FROM all_balances ab " +
+            "               WHERE ab.contract_address = dt.contract_address " +
+            "                 AND ab.timestamp <= d.date + interval '1 day' - interval '1 second' " +
+            "               ORDER BY ab.timestamp DESC " +
+            "               LIMIT 1 " +
+            "           ), 0) as balance " +
             "    FROM dates d " +
-            "    CROSS JOIN all_tokens t " +
+            "    CROSS JOIN distinct_tokens dt " +
             "), " +
             "base_prices AS ( " +
             "    SELECT db.date, " +
             "           db.contract_address, " +
             "           db.balance, " +
-            "           (SELECT price_usd " +
-            "            FROM token_price_history " +
-            "            WHERE contract_address ILIKE db.contract_address " +
-            "            AND timestamp <= db.date " +
-            "            ORDER BY timestamp DESC " +
-            "            LIMIT 1) as base_price_usd " +
+            "           COALESCE(( " +
+            "               SELECT price_usd " +
+            "               FROM token_price_history " +
+            "               WHERE contract_address ILIKE db.contract_address " +
+            "                 AND timestamp <= db.date + interval '1 day' - interval '1 second' " +
+            "               ORDER BY timestamp DESC " +
+            "               LIMIT 1 " +
+            "           ), 1) as base_price_usd " +
             "    FROM daily_balances db " +
-            "    WHERE db.balance IS NOT NULL " +
             "), " +
             "risk_adjusted_prices AS ( " +
             "    SELECT bp.date, " +
@@ -87,13 +95,13 @@ public interface WalletTokenBalanceMapper extends BaseMapper<WalletTokenBalance>
             "    FROM base_prices bp " +
             ") " +
             "SELECT date as timestamp, " +
-            "       SUM(COALESCE(balance * COALESCE(price_usd, 1), 0)) as value_usd " +
+            "       SUM(balance * price_usd) as value_usd " +
             "FROM risk_adjusted_prices " +
             "GROUP BY date " +
             "ORDER BY date")
-    List<WalletValuePoint> getWalletValueCurve(@Param("startTime") LocalDateTime startTime, 
-                                              @Param("endTime") LocalDateTime endTime,
-                                              @Param("contractAddress") String contractAddress);
+    List<WalletValuePoint> getWalletValueCurve(@Param("startTime") LocalDateTime startTime,
+                                               @Param("endTime") LocalDateTime endTime,
+                                               @Param("contractAddress") String contractAddress);
 
     @Select("WITH RECURSIVE hours AS ( " +
             "    SELECT date_trunc('hour', #{startTime}::timestamp) as hour " +

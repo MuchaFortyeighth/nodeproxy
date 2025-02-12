@@ -66,23 +66,23 @@ public class TokenTransferService {
         Long startBlock = null;
         Long endBlock = null;
 
-        if (startTime != null) {
-            String startTimeStr = Instant.ofEpochSecond(startTime)
-                .atZone(ZoneId.systemDefault())
-                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-            Block startBlockObj = blocksMapper.getNearestBlock(startTimeStr);
-            startBlock = startBlockObj != null ? startBlockObj.getNumber() : null;
-        }
+//        if (startTime != null) {
+//            String startTimeStr = Instant.ofEpochSecond(startTime)
+//                .atZone(ZoneId.systemDefault())
+//                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+//            Block startBlockObj = blocksMapper.getNearestBlock(startTimeStr);
+//            startBlock = startBlockObj != null ? startBlockObj.getNumber() : null;
+//        }
+//
+//        if (endTime != null) {
+//            String endTimeStr = Instant.ofEpochSecond(endTime)
+//                .atZone(ZoneId.systemDefault())
+//                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+//            Block endBlockObj = blocksMapper.getNearestBlock(endTimeStr);
+//            endBlock = endBlockObj != null ? endBlockObj.getNumber() : null;
+//        }
 
-        if (endTime != null) {
-            String endTimeStr = Instant.ofEpochSecond(endTime)
-                .atZone(ZoneId.systemDefault())
-                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-            Block endBlockObj = blocksMapper.getNearestBlock(endTimeStr);
-            endBlock = endBlockObj != null ? endBlockObj.getNumber() : null;
-        }
-
-        return tokenTransferMapper.getTokenTransfers(page, contractAddress, startBlock, endBlock);
+        return tokenTransferMapper.getTokenTransfers(page, contractAddress, startTime, endTime);
     }
 
     public IPage<TokenTransferDTO> queryTransfers(LocalDateTime startTime,

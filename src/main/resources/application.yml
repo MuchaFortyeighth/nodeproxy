@@ -16,9 +16,10 @@ spring:
       connection-test-query: SELECT 1  # 测试连接是否有效的查询
   cache:
     type: simple
+  time-zone: Asia/Shanghai
 
 server:
-  port: 8087
+  port: 8089
   compression:
     enabled: true
     mime-types: application/json,application/xml,text/html,text/plain,text/css,application/javascript
@@ -26,7 +27,7 @@ server:
 
 proxy:
   config:
-    path: F:\tokenview\newgit\nodeproxy\src\main\resources\nodeproxy.json
+    path: D:\nodeproxy\src\main\resources\nodeproxy.json
 mybatis-plus:
   configuration:
     cache-enabled: true
